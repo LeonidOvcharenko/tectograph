@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>VIEW OF SHARED MODEL</title>
+	<link rel="stylesheet" href="css/normalize.css">
+	<link rel="stylesheet" href="css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/viewer.css">
+</head>
+<body>
+	<div id="wrapper"><div id="canvas"></div><div id="controls"></div></div>
+	<div id="static"></div>
+	<script id="map-controls" type='text/ractive'>
+	<div id="zoom-control" class="btn-group-vertical" role="group">
+		<button class="btn btn-default{{zoomlock=='min' ? ' disabled' : ''}}" on-click="zoom-out" title="Уменьшить (−)"><i class="fa fa-minus"></i></button>
+		<button class="btn btn-default{{zoomlock=='max' ? ' disabled' : ''}}" on-click="zoom-in" title="Увеличить (+)"><i class="fa fa-plus"></i></button>
+	</div>
+	<!--div id="minimap"><div class="map"><div class="model"></div><div class="view"></div></div></div-->
+	<div id="progress-indicator" style="width:{{progress}}%;{{is_drawing ? 'display:block;' : ''}}"></div>
+	</script>
+	
+	<script src="js/libs-min/jquery.js"></script>
+	<script src="js/libs-min/jquery-ui.js"></script>
+	<script src="js/libs-min/jquery.mousewheel.js"></script>
+	<script src="js/libs-min/jquery.scrollintoview.js"></script>
+	<script src="js/libs-min/bootstrap.js"></script>
+	<script src="js/libs-min/ractive.js"></script>
+
+	<script src="js/libs-min/svg.js"></script>
+	<script src="js/libs-min/svg.export.js"></script>
+	<script src="js/compiled/utils.js"></script>
+	<script src="js/compiled/model.js"></script>
+	<script src="js/compiled/themes.js"></script>
+	<script src="js/compiled/svg-render.js"></script>
+	<script src="js/compiled/viewer.js"></script>
+	<script src="js/compiled/samples.js"></script>
+	<script src="js/compiled/app-view.js"></script>
+</body>
+</html>

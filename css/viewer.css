@@ -1,0 +1,137 @@
+@import url(http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic,700italic&subset=latin,cyrillic,latin-ext,cyrillic-ext);
+/* @import url(http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700&subset=latin,cyrillic-ext,cyrillic,latin-ext,greek-ext,greek); */
+@import url(https://fonts.googleapis.com/css?family=Neucha&subset=latin,cyrillic);
+html, body {
+	height: 100%;
+}
+body {
+	background-color: white;
+	position: relative;
+	font-family: 'PT Sans', sans-serif;
+}
+
+#wrapper {
+	background-color: white;
+	height: 100%;
+	margin: 0 auto;
+	overflow: hidden;
+	position: relative;
+	cursor: default;
+}
+#canvas {
+	width: 100%;
+	position: absolute;
+}
+#canvas svg, #t {
+	font-family: 'PT Sans', sans-serif;
+}
+#canvas svg a {
+	fill: #0E3456;
+	text-decoration: underline;
+}
+#canvas rect.frame.none {
+	stroke-width: 0!important;
+}
+.drag {
+	cursor: url(../images/openhand.cur), url(/images/openhand.cur), auto!important;
+	cursor: -moz-grab!important;
+	/*cursor: -webkit-grab!important; - looks ugly :( */
+}
+.dragging {
+	cursor: url(../images/closedhand.cur), url(/images/closedhand.cur), auto!important;
+	cursor: -moz-grabbing!important;
+	/*cursor: -webkit-grabbing!important; - looks ugly :( */
+}
+.smooth-transform {
+	-webkit-transition: all 0.4s ease-in-out;
+	-moz-transition: all 0.4s ease-in-out;
+	-ms-transition: all 0.4s ease-in-out;
+	-o-transition: all 0.4s ease-in-out;
+	transition: all 0.4s ease-in-out;
+}
+.edit {
+	cursor: url(../images/pencil.cur), url(/images/pencil.cur), auto!important;
+}
+.zoom_fit {
+	cursor: url(../images/zoom.cur), url(/images/zoom.cur), auto!important;
+}
+.pointer {
+	cursor: pointer;
+}
+
+/* controls */
+#wrapper #zoom-control {
+	position: absolute;
+	left: 15px;
+	bottom: 15px;
+	z-index: 2;
+}
+#wrapper #minimap {
+	position: absolute;
+	left: 15px;
+	bottom: 15px;
+	z-index: 2;
+}
+#wrapper #minimap .map {
+	width: 100px;
+	height: 100px;
+	position: relative;
+	background-color: white;
+	overflow: hidden;
+	border: 1px solid #CCCCCC;
+}
+#wrapper #minimap .model {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 10px;
+	height: 10px;
+	background: #CCCCCC;
+}
+#wrapper #minimap .view {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 10px;
+	height: 10px;
+	border: 1px solid #357EBD;
+	background: rgba(66, 139, 202, 0.3);
+}
+
+
+
+/* printing */
+@media print {
+@page {
+	/*size: 11.7in 8.3in;*/
+	size: landscape; /*A4 landscape;*/
+	margin: 0.5cm;
+}
+#schema-editor {
+	padding-top: 0;
+}
+#menu, #modeller, #sidebar, #controls {
+	display: none;
+}
+#wrapper {
+	margin-top: 0;
+	overflow: visible;
+	width: auto;
+	height: auto;
+}
+#canvas {
+	position: static;
+	width: 100%;
+	height: 100%;
+}
+rect.frame, rect.mask {
+	display: none!important;
+}
+text {
+	display: block!important;
+}
+a:link:after {
+	content: " (" attr(href) ") ";
+}
+
+}
