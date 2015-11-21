@@ -3,4 +3,4 @@
 
 В репозитории — просмотрщик (редактор в процессе разработки).
 
-Описание и пример — на [моем сайте](http://leonidovcharenko.ru/tectogram)
+Описание и пример — на [моем сайте](http://leonidovcharenko.ru/tectograms).
