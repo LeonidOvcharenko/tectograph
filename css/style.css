@@ -48,6 +48,9 @@ kbd {
 	-o-transition: width 0.2s;
 	transition: width 0.2s;
 }
+#wrapper.fileover {
+	background-color: #F0F0F0!important;
+}
 
 /* ------------------------- */
 /* Menu */
@@ -209,6 +212,14 @@ kbd {
 	max-height: 350px;
 	overflow-y: auto;
 }
+#modeller #theme {
+	position: absolute;
+	right: 280px;
+	top: 5px;
+}
+#modeller #theme label {
+	font-weight: normal;
+}
 #modeller #search {
 	position: absolute;
 	top: 1px;
@@ -239,32 +250,61 @@ kbd {
 	overflow: hidden;
 	text-align: left;
 }
-#modeller #form {
+
+/* ------------------------- */
+/* Editor form */
+/* ------------------------- */
+#form {
 	overflow-y: auto;
 	overflow-x: hidden;
-	height: 100%;
 	padding: 15px;
 	width: 380px;
 	position: relative;
+	
+	background-color: rgba(141, 190, 255, 0.75);
+	background-color: rgba(0, 0, 0, 0.75);
+	color: #f0f0f0;
+	/*border: 2px solid #8DBEFF;*/
+	border-radius: 10px;
+	z-index: 777;
+	position: absolute;
+}
+#form form {
+	position: relative;
+}
+#form form>button.close {
+	float: none;
+	position: absolute;
+	top: -18px;
+	right: -12px;
+	text-shadow: none;
+	color: white;
+}
+#form .form-control,
+#form .btn {
+	border: none;
+}
+#form .form-group {
+	margin-bottom: 1px;
 }
 
-#modeller form .has-success .form-control-feedback,
-#modeller form .has-warning .form-control-feedback,
-#modeller form .has-error .form-control-feedback
+#form .has-success .form-control-feedback,
+#form .has-warning .form-control-feedback,
+#form .has-error .form-control-feedback
 {
 	top: 0;
 	right: 0;
 	z-index: 3;
 }
 /*
-#modeller form #model-image-group.has-success .form-control-feedback,
-#modeller form #model-image-group.has-warning .form-control-feedback,
-#modeller form #model-image-group.has-error .form-control-feedback
+#form #model-image-group.has-success .form-control-feedback,
+#form #model-image-group.has-warning .form-control-feedback,
+#form #model-image-group.has-error .form-control-feedback
 {
 	right: 128px;
 }
 */
-#modeller form .label {
+#form .label {
 /*	display: inline-block;*/
 	display: block;
 	margin-right: 8px;
@@ -275,56 +315,59 @@ kbd {
 	float: left;
 	text-align: left;
 }
-#modeller .has-feedback .form-control {
+#form .has-feedback .form-control {
 	padding-right: 34px;
 }
-#modeller #model-featured {
+#model-featured {
 	cursor: pointer;
 }
-#modeller #model-featured.fa-star {
+#model-featured.fa-star {
 	color: #F08010;
 }
-/* #modeller #model-description {
+/* #model-description {
 	background-image: url('data:image/gif;base64,R0lGODlhAQAaAIAAAO70/AAAACwAAAAAAQAaAAACBISPqVkAOw==');
 	background-repeat: repeat-x;
 	background-attachment: scroll;
 	background-attachment: local;
 } */
-#modeller #model-description {
+#model-description {
 	resize: vertical;
 }
-#modeller #model-image-group,
-#modeller #model-link-group {
+#model-addons {
+	margin-top: 15px;
+}
+#model-image-group,
+#model-link-group {
 	position: relative;
 }
-#modeller #model-image-group .input-group-addon,
-#modeller #model-link-group .input-group-addon {
+#model-image-group .input-group-addon,
+#model-link-group .input-group-addon {
 	cursor: pointer;
 }
 
-#modeller .fa.fa-top {
+#form .fa.fa-top {
 	font-size: 0.7em;
 	bottom: 0.6em;
 	left: 0.7em;
 	position: relative;
 }
-#modeller .fa.fa-bottom {
+#form .fa.fa-bottom {
 	font-size: 0.7em;
 	position: relative;
 	top: 0.5em;
 	left: -0.8em;
 }
-#modeller #picture-scale {
+#picture-scale {
 	margin: 15px 7px 5px 7px;
 }
-#modeller #picture-scale-hint {
+#picture-scale-hint {
 	margin: 7px 0 15px 0;
 	padding: 0 7px;
 	font-size: 0.8em;
 	height: 1em;
 	position: relative;
 }
-#modeller #picture-scale-hint .value {
+#picture-scale-hint .value {
 	cursor: pointer;
 	display: block;
 	padding: 0 10px;
@@ -332,25 +375,25 @@ kbd {
 	position: absolute;
 	top: 0;
 }
-#modeller #picture-scale-hint .value.scale01 { left:   0; }
-#modeller #picture-scale-hint .value.scale05 { left:  12%; }
-#modeller #picture-scale-hint .value.scale1  { left:  25%; font-weight: bold; }
-#modeller #picture-scale-hint .value.scale2  { left:  43%; }
-#modeller #picture-scale-hint .value.scale5  { left:  71%; }
-#modeller #picture-scale-hint .value.scale10 { right: -8px; }
-#modeller #picture-scale-hint .value:hover {
+#picture-scale-hint .value.scale01 { left:   0; }
+#picture-scale-hint .value.scale05 { left:  12%; }
+#picture-scale-hint .value.scale1  { left:  25%; font-weight: bold; }
+#picture-scale-hint .value.scale2  { left:  43%; }
+#picture-scale-hint .value.scale5  { left:  71%; }
+#picture-scale-hint .value.scale10 { right: -8px; }
+#picture-scale-hint .value:hover {
 	color: #428bca;
 }
 
 .ui-slider {
-    position: relative;
+	position: relative;
 }
 .ui-slider .ui-slider-handle {
-    position: absolute;
-    z-index: 2;
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
+	position: absolute;
+	z-index: 2;
+	width: 13px;
+	height: 13px;
+	cursor: pointer;
 	background-color: #EEE;
 	border: 1px solid #CCC;
 	-webkit-border-radius: 4px;
@@ -377,10 +420,8 @@ kbd {
 .ui-slider-disabled {
 	opacity: 0.5;
 }
-
-
-#modeller #picture-preview {
-	margin-top: 15px;
+#picture-preview {
+	margin-top: 1px;
 	padding: 8px;
 	background-color: white;
 	text-align: center;
@@ -390,15 +431,15 @@ kbd {
 	position: relative;
 	font-size: 1.5em;
 }
-#modeller #picture-preview i.fa {
+#picture-preview i.fa {
 	color: #E0E0E0;
 	text-shadow: 0 1px 0 #DDDDDD;
 }
-#modeller #picture-preview img {
+#picture-preview img {
 	max-width: 100%;
 	height: auto;
 }
-#modeller #picture-preview .play {
+#picture-preview .play {
 	cursor: pointer;
 	background-color: rgba(255,255,255,0.2);
 	border: 8px solid white;
@@ -413,7 +454,7 @@ kbd {
 	/*right: 0;
 	bottom: 0;*/
 }
-#modeller #picture-preview .play i {
+#picture-preview .play i {
 	top: 50%;
 	position: absolute;
 	left: 50%;
@@ -422,39 +463,56 @@ kbd {
 	color: #DDDDDD;
 	text-shadow: 0px 0px 3px #000;
 }
-#modeller #video-h {
+#video-h {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-#modeller .ui-sortable-helper {
+.ui-sortable-helper {
 	cursor: url(../images/closedhand.cur), url(/images/closedhand.cur), auto!important;
 	cursor: -moz-grabbing!important;
 	/*cursor: -webkit-grabbing!important; - looks ugly :( */
 }
-#modeller .relation_from_to {
+.relation_from_to {
 	clear: both;
 }
-#modeller .relation_from_to select {
+.relation_from_to select {
 	width: 40%;
 	display: inline-block;
 }
-#modeller .relation_from_to .rel_direction {
+.relation_from_to .rel_direction {
 	cursor: pointer;
 	display: inline-block;
 	text-align: center;
 }
-#modeller .dropdown-menu {
+#form .dropdown-menu {
 	font-size: 12px;
 	max-height: 280px;
 	overflow-y: auto;
 	max-width: 250px;
 }
-#modeller .dropdown-menu li a {
+#form .dropdown-menu li a {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+
+/* ------------------------- */
+/* Subform */
+/* ------------------------- */
+#modeller #subform {
+	overflow-y: auto;
+	overflow-x: hidden;
+	height: 100%;
+	padding: 15px;
+	width: 380px;
+	position: relative;
+}
+#systemtext {
+	resize: vertical;
+	font-family: 'courier new', monospace;
+}
+
 /* ------------------------- */
 /* Sidebar */
 /* ------------------------- */

@@ -54,6 +54,17 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
     min_block_dist: function(node1, node2) {
       return (node1.dia / 2 + node2.dia / 2 + this.params.margin) * this.params.reducer;
     },
+    min_block_dist_dyn: function(node1, node2) {
+      var a, b, c;
+      if (node1.x && node2.x && node1.y && node2.y) {
+        a = Math.sqrt((node1.h + node2.h) * (node1.h + node2.h) / 4 + (node1.x - node2.x) * (node1.x - node2.x));
+        b = Math.sqrt((node1.w + node2.w) * (node1.w + node2.w) / 4 + (node1.y - node2.y) * (node1.y - node2.y));
+        c = (node1.dia / 2 + node2.dia / 2 + this.params.margin) * this.params.reducer;
+        return Math.min(Math.min(a, b), c);
+      } else {
+        return this.min_block_dist(node1, node2);
+      }
+    },
     arrange: function() {
       var S, edge, l, len, len1, len2, m, n, o, q, ref, ref1, row;
       this.init_edges();
@@ -79,7 +90,6 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
       }
       this.params.W = 3 * Math.sqrt(S);
       this.params.margin = this.params.W * 0.03;
-      this.params.zoom = 0.10;
       this.params.reducer = Math.sqrt(2) / this.params.W;
       this.params.restorer = 1 / this.params.reducer;
       ref1 = this.edges;
@@ -453,9 +463,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
         w = text.bbox().width;
       }
       text.build(false);
-      if (this.model.featured) {
-        text.fill(Theme.color.emphasis);
-      }
+      text.fill(this.model.featured ? Theme.color.emphasis : Theme.color.text);
       if (!title) {
         title = text;
       }
@@ -471,7 +479,11 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
       lines = [];
       for (l = 0, len = description.length; l < len; l++) {
         paragraph = description[l];
-        balanced = paragraph === '' ? [' '] : Render.balance_text(paragraph, this.fontsize2, w);
+        if (paragraph.match(/[^\s]/g)) {
+          balanced = Render.balance_text(paragraph.replace(/(\s+)$/g, ''), this.fontsize2, w);
+        } else {
+          balanced = [' '];
+        }
         $.merge(lines, balanced);
       }
       return lines;
@@ -500,7 +512,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
         size: this.fontsize2,
         family: Theme.fontFamily,
         leading: Theme.lineHeight + 'em'
-      }).attr('data-level', this.level + 1).move(x, y);
+      }).attr('data-level', this.level + 1).move(x, y).fill(Theme.color.text);
       this.object.add(text);
       bbox = text.bbox();
       this.text_mask(bbox, this.level + 1);
@@ -591,7 +603,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
     Element.prototype.element_frame = function() {
       var frame_stroke;
       frame_stroke = {
-        color: '#FFFFFF',
+        color: Theme.color.background,
         width: Theme.strokes[this.level - 1]
       };
       this.frame = this.draw.rect(1, 1).radius(this.pad).fill('none').stroke(frame_stroke);
@@ -1008,6 +1020,8 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
                 move_x: 0,
                 move_y: 0,
                 dia: Math.sqrt(bbox.width * bbox.width + bbox.height * bbox.height),
+                h: bbox.height,
+                w: bbox.width,
                 is_element: i === j
               }
             });
@@ -1045,7 +1059,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
             if (m) {
               bbox = m.object.bbox();
               rbox = m.object.rbox();
-              rect = this.draw.rect(bbox.width, bbox.height).radius(padding_x).move(rbox.x, rbox.y).fill('#FFFFFF');
+              rect = this.draw.rect(bbox.width, bbox.height).radius(padding_x).move(rbox.x, rbox.y).fill(Theme.color.background);
               if (i === j && show_elements) {
                 rect.stroke(this.stroke);
               } else {
@@ -1133,7 +1147,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
           hp2 = line.pointAt((pos - dp) * edge_length);
           helper = _this.draw.line(hp1.x, hp1.y, hp2.x, hp2.y).stroke({
             width: _this.stroke.width,
-            color: '#FFFFFF'
+            color: Theme.color.background
           });
           helper.marker('start', _this.arrow);
           _this.object.add(helper);

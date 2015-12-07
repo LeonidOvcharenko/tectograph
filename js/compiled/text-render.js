@@ -76,7 +76,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
       t = '';
       t += this.indent + '- ' + (this.model.title || '');
       if (this.model.link && this.model.link.url) {
-        t += '\n' + this.indent + '[' + this.model.link.url + ']';
+        t += '\n' + this.indent + '  [' + this.model.link.url + ']';
       }
       if (this.model.description) {
         t += '\n' + this.indent + '  ' + this.model.description.replace(/\n/g, '\n' + this.indent + '  ');
@@ -160,7 +160,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
         type: 'element',
         model: model
       });
-      return '<?xml version="1.0" ?>\n<model version="2014.11.29">\n' + system.render() + '\n</model>';
+      return '<?xml version="1.0" ?>\n<model version="2015.12.04">\n' + system.render() + '\n</model>';
     };
 
     return XMLrender;

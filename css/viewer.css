@@ -68,7 +68,7 @@ body {
 }
 #wrapper #minimap {
 	position: absolute;
-	left: 15px;
+	right: 15px;
 	bottom: 15px;
 	z-index: 2;
 }

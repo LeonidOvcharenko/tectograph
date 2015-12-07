@@ -42,7 +42,7 @@
 			t = ''
 			t += @indent+'- '+(@model.title || '')
 			if @model.link and @model.link.url
-				t += '\n'+@indent+'['+@model.link.url+']'
+				t += '\n'+@indent+'  ['+@model.link.url+']'
 			if @model.description
 				t += '\n'+@indent+'  '+@model.description.replace(/\n/g, '\n'+@indent+'  ')
 			if @model.picture and @model.picture.url
@@ -87,7 +87,7 @@
 				level: 0
 				type: 'element'
 				model: model
-			'<?xml version="1.0" ?>\n<model version="2014.11.29">\n'+system.render()+'\n</model>'
+			'<?xml version="1.0" ?>\n<model version="2015.12.04">\n'+system.render()+'\n</model>'
 
 	class win.XMLElement extends XObj
 		constructor: (options)->

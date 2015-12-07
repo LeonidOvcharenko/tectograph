@@ -28,9 +28,11 @@
 					progress: 0
 			@minimap = $ '#minimap .model'
 			@viewport = $ '#minimap .view'
+			@quickdrag = $ '#minimap .map'
 			
 			@wrapper.addClass 'drag'
 			@div.addClass 'smooth-transform' if @opt.smooth
+			$('#wrapper').css {backgroundColor: Theme.color.background}
 			@update_minimap()
 		
 		controller: ->
@@ -138,6 +140,22 @@
 				@wrapper.removeClass 'dragging'
 				@dragging = null
 				@div.addClass 'smooth-transform' if @opt.smooth
+			# quick dragging
+			@quickdrag.on 'mousedown.viewer', (e)=>
+				$.clearSelection()
+				doc.activeElement.blur() if $.activeInput()
+				@wrapper.addClass 'dragging'
+				@dragging =
+					x: e.clientX,
+					y: e.clientY
+				e.preventDefault()
+				false
+			@quickdrag.on 'mousemove.viewer', (e)=>
+				return if not @dragging
+				@div.removeClass 'smooth-transform' if @opt.smooth
+				@pan_by (e.clientX-@dragging.x)*5, (e.clientY-@dragging.y)*5
+				@dragging.x = e.clientX
+				@dragging.y = e.clientY
 			# resize
 			$win.on 'resize.viewer', (e)=>
 				@update_minimap()
@@ -202,7 +220,7 @@
 		scale_content: (scale)->
 			# console.log 'TODO: scale content for canvas to',scale
 
-		apply_scale: ->		
+		apply_scale: ->
 			@lock_zoom(if @scale==Theme.minzoom then 'min' else if @scale==Theme.maxzoom then 'max' else '')
 		
 			# gather the old properties
@@ -258,6 +276,9 @@
 			@apply_scale()
 			
 		# methods for editor: on canvas — SVG object
+		find: (tag)->
+			@div.find('g[data-model="'+tag+'"]')
+
 		find_and_zoom: (tag)->
 			el = @div.find('g[data-model="'+tag+'"]')[0]
 			@zoom_fit el.instance if el

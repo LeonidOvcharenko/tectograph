@@ -2,7 +2,7 @@
 
 RegExp.escape = (text)->
 	text.replace /[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"
-
+	
 # -random ~pseudo
 Rand =
 	seed: 1

@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>VIEW OF SHARED MODEL</title>
+	<title>Tectogram</title>
 	<link rel="stylesheet" href="css/normalize.css">
 	<link rel="stylesheet" href="css/font-awesome.min.css">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
@@ -16,7 +16,7 @@
 		<button class="btn btn-default{{zoomlock=='min' ? ' disabled' : ''}}" on-click="zoom-out" title="Уменьшить (−)"><i class="fa fa-minus"></i></button>
 		<button class="btn btn-default{{zoomlock=='max' ? ' disabled' : ''}}" on-click="zoom-in" title="Увеличить (+)"><i class="fa fa-plus"></i></button>
 	</div>
-	<!--div id="minimap"><div class="map"><div class="model"></div><div class="view"></div></div></div-->
+	<div id="minimap"><div class="map"><div class="model"></div><div class="view"></div></div></div>
 	<div id="progress-indicator" style="width:{{progress}}%;{{is_drawing ? 'display:block;' : ''}}"></div>
 	</script>
 	

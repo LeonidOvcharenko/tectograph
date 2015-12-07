@@ -8,7 +8,7 @@
   win.system = system2;
   win.system.reload('autosave');
   $win.load(function() {
-    win.Theme = win.ThemeSerif;
+    win.Theme = win.Themes[0];
     win.viewer = new Viewer({
       div: 'canvas'
     });

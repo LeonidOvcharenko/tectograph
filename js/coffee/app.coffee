@@ -8,7 +8,7 @@
 	win.system.reload 'autosave'
 	
 	$win.load ->
-		win.Theme = win.ThemeSerif
+		win.Theme = win.Themes[0]
 		win.viewer = new Viewer
 			div: 'canvas'
 		win.modelview = new ModelWebViewEditable

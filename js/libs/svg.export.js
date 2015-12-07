@@ -67,7 +67,7 @@
             if (this.node.childNodes[i].instance instanceof SVG.TSpan)
               node += this.node.childNodes[i].instance.exportSvg(options, level + 1)
             else
-              node += this.node.childNodes[i].nodeValue.replace(/&/g,'&amp;')
+              node += this.node.childNodes[i].nodeValue.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&#34;').replace(/'/g, '&#39;')
 
         } else if (SVG.ComponentTransferEffect && this instanceof SVG.ComponentTransferEffect) {
           this.rgb.each(function() {

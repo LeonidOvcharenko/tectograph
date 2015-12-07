@@ -306,6 +306,27 @@
       return this.depth_of(this.root) + 1;
     };
 
+    S.prototype.rebuild = function(s) {
+      var a, key, results;
+      for (key in this) {
+        a = this[key];
+        if (a instanceof A) {
+          delete this[key];
+        }
+      }
+      results = [];
+      for (key in s) {
+        a = s[key];
+        if (key === 'root' || key === 'story') {
+          results.push(this[key] = a);
+        } else {
+          this[key] = new A(a);
+          results.push(this[key].system = this);
+        }
+      }
+      return results;
+    };
+
     S.prototype.serialize = function() {
       return JSON.stringify(this, function(key, value) {
         if (key === "system") {
@@ -317,25 +338,7 @@
     };
 
     S.prototype.deserialize = function(s) {
-      var a, key, p, results;
-      for (key in this) {
-        a = this[key];
-        if (a instanceof A) {
-          delete this[key];
-        }
-      }
-      p = JSON.parse(s);
-      results = [];
-      for (key in p) {
-        a = p[key];
-        if (key === 'root' || key === 'story') {
-          results.push(this[key] = a);
-        } else {
-          this[key] = new A(a);
-          results.push(this[key].system = this);
-        }
-      }
-      return results;
+      return this.rebuild(JSON.parse(s));
     };
 
     S.prototype.save = function(key) {

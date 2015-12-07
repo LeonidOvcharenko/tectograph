@@ -7,6 +7,7 @@
 	class win.ThemeGen
 		constructor: (options)->
 			defaults =
+				title: ''
 				basefontsize: 7812.5 # px at level #0
 				K: 2.5               # interlevel scale
 				xSpace: 2.5          # × fontsize
@@ -24,6 +25,8 @@
 				toplevel: 1
 				slideshow: 2000
 				color:
+					text: '#000000'
+					background: '#FFFFFF'
 					selected:
 						stroke: '#8DBEFF'
 						fill: '#FFFFE2'
@@ -32,7 +35,7 @@
 					found: '#E5FF00'
 					bullet: '#C0C0C0'
 					emphasis: '#F08010'
-					link: '#A0A0F0'
+					link: '#4F7FCE'
 					link_hover: '#2020F0'
 			$.extend true, @, defaults, options
 			
@@ -57,15 +60,18 @@
 			@maxzoom = 1/@strokes[@strokes.length-1]
 			# min zoom: fontsize[toplevel+1] = minfontsize
 			@minzoom = @minfontsize / @sizes[@toplevel+1]
-
+		
 		threshold: (s)->
 			for fs, i in @sizes
 				if @minfontsize > fs*s
 					return i
 			@sizes.length
 	
+	win.Themes = []
+	
 	# -default theme settings
-	win.Theme = new ThemeGen
+	win.Themes.push new ThemeGen
+		title: 'Веб'
 		basefontsize: 7812.5 # px at level #0
 		K: 2.5
 		max_imgwidth: 300 # px
@@ -81,31 +87,78 @@
 			bullet: '#C0C0C0'
 			mask: '#C0C0C0'
 			emphasis: '#F08010'
-			link: '#A0A0F0'
+			link: '#4F7FCE'
 			link_hover: '#2020F0'
 	
-	win.ThemeSerif = new ThemeGen
+	win.Themes.push new ThemeGen
+		title: 'Презентация'
+		K: 2.5
+		fontFamily: 'Trebuchet MS'
+		lineHeight: 1.33
+		color:
+			background: '#F4F4F3'
+			text: '#36424E'
+			bullet: '#36424E'
+			stroke: '#36424E'
+			mask: '#D5D8D6'
+			emphasis: '#70A3EF'
+			link: '#7491BC'
+			link_hover: '#70A3EF'
+			selected:
+				stroke: '#2D261D'
+				fill: '#2D261D'
+	
+	win.Themes.push new ThemeGen
+		title: 'Книга'
 		K: 2.5
 		fontFamily: 'Georgia'
 		lineHeight: 1.33
 		color:
 			bullet: '#A0A0A0'
 			mask: '#A0A0A0'
+			emphasis: '#FF3333'
 	
-	win.ThemeMonospace = new ThemeGen
+	win.Themes.push new ThemeGen
+		title: 'Старая книга'
+		K: 2.5
+		fontFamily: 'Georgia'
+		lineHeight: 1.5
+		color:
+			background: '#FDE7B2'
+			text: '#371C07'
+			bullet: '#BD8E58'
+			stroke: '#63481E'
+			mask: '#BD8E58'
+			emphasis: '#862400' # '#BD8E58'
+			link: '#B4794A'
+			link_hover: '#FFDA73'
+			selected:
+				stroke: '#2D261D'
+				fill: '#2D261D'
+	
+	win.Themes.push new ThemeGen
+		title: 'Печатная машинка'
 		K: 2
 		fontFamily: 'courier new'
+		color:
+			emphasis: '#FF3333'
 		
-	win.ThemeScript = new ThemeGen
+	win.Themes.push new ThemeGen
+		title: 'Рукопись 1'
 		K: 2
 		xStroke: 0.085
 		markersize: 1.5
 		fontFamily: 'comic sans ms'
 		lineHeight: 1.15
 
-	win.ThemeScript2 = new ThemeGen
+	win.Themes.push new ThemeGen
+		title: 'Рукопись 2'
 		K: 2.25
 		fontFamily: 'Neucha'
 		lineHeight: 1.15
+		color:
+			emphasis: '#F9AF33'
+		
+	win.Theme = win.Themes[0]
 
 )(jQuery, window, document)

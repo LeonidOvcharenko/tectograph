@@ -46,6 +46,15 @@
 		min_block_dist: (node1, node2)->
 			(node1.dia/2 + node2.dia/2 + @params.margin) * @params.reducer
 
+		min_block_dist_dyn: (node1, node2)->
+			if node1.x and node2.x and node1.y and node2.y
+				a = Math.sqrt( (node1.h+node2.h)*(node1.h+node2.h)/4 + (node1.x-node2.x)*(node1.x-node2.x) )
+				b = Math.sqrt( (node1.w+node2.w)*(node1.w+node2.w)/4 + (node1.y-node2.y)*(node1.y-node2.y) )
+				c = (node1.dia/2 + node2.dia/2 + @params.margin) * @params.reducer
+				Math.min( Math.min(a, b), c )
+			else
+				@min_block_dist node1, node2
+
 		arrange: ->
 			@init_edges()
 			# params of Fruchterman-Reingold algorithm
@@ -65,10 +74,9 @@
 			# params of displaying
 			@params.W = 3 * Math.sqrt(S) # area length
 			@params.margin = @params.W * 0.03 # guaranteed block margin
-			@params.zoom = 0.10
-			@params.reducer = Math.sqrt(2)/@params.W # Math.sqrt(2)/@params.W
+			@params.reducer = Math.sqrt(2)/@params.W
 			@params.restorer = 1/@params.reducer
-				
+			
 			for edge in @edges
 				edge.min_len = @min_block_dist edge.from.node, edge.to.node
 			
@@ -334,7 +342,7 @@
 				text.plain ' ' # nbsp here
 				w = text.bbox().width
 			text.build false
-			text.fill Theme.color.emphasis if @model.featured
+			text.fill if @model.featured then Theme.color.emphasis else Theme.color.text
 			title = text if not title
 			
 			@object.add title
@@ -346,7 +354,10 @@
 			description = @model.description.split '\n'
 			lines = []
 			for paragraph in description
-				balanced = if paragraph=='' then [' '] else Render.balance_text paragraph, @fontsize2, w
+				if paragraph.match /[^\s]/g
+					balanced = Render.balance_text paragraph.replace(/(\s+)$/g, ''), @fontsize2, w
+				else
+					balanced = [' ']
 				$.merge lines, balanced
 			lines
 		
@@ -361,7 +372,7 @@
 					linkobj.addClass('pointer fa').fill Theme.color.link
 					linkobj.click ()=>
 						win.open @model.link.url, '_blank'
-			).font({size: @fontsize2, family: Theme.fontFamily, leading: Theme.lineHeight+'em'}).attr('data-level',@level+1).move(x, y)
+			).font({size: @fontsize2, family: Theme.fontFamily, leading: Theme.lineHeight+'em'}).attr('data-level',@level+1).move(x, y).fill(Theme.color.text)
 			@object.add text
 			bbox = text.bbox()
 			@text_mask bbox, @level+1
@@ -421,7 +432,7 @@
 			@fix_frame()
 			
 		element_frame: ->
-			frame_stroke = { color: '#FFFFFF', width: Theme.strokes[@level-1] }
+			frame_stroke = { color: Theme.color.background, width: Theme.strokes[@level-1] }
 			@frame = @draw.rect(1, 1).radius(@pad).fill('none').stroke(frame_stroke)
 			@frame.addClass('frame none').move(@x, @y)
 			@object.add @frame
@@ -684,6 +695,8 @@
 							move_x: 0
 							move_y: 0
 							dia: Math.sqrt(bbox.width * bbox.width + bbox.height * bbox.height)
+							h: bbox.height
+							w: bbox.width
 							is_element: i==j
 
 		# -matrix
@@ -704,7 +717,7 @@
 					if m
 						bbox = m.object.bbox()
 						rbox = m.object.rbox()
-						rect = @draw.rect(bbox.width, bbox.height).radius(padding_x).move(rbox.x, rbox.y).fill('#FFFFFF')
+						rect = @draw.rect(bbox.width, bbox.height).radius(padding_x).move(rbox.x, rbox.y).fill(Theme.color.background)
 						if i==j and show_elements
 							rect.stroke @stroke
 						else
@@ -768,7 +781,7 @@
 				dp = 0.01
 				hp1 = line.pointAt pos*edge_length
 				hp2 = line.pointAt (pos-dp)*edge_length
-				helper = @draw.line(hp1.x, hp1.y, hp2.x, hp2.y).stroke({ width: @stroke.width, color: '#FFFFFF' })
+				helper = @draw.line(hp1.x, hp1.y, hp2.x, hp2.y).stroke({ width: @stroke.width, color: Theme.color.background })
 				helper.marker 'start', @arrow
 				@object.add helper
 				helper.back()

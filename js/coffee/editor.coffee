@@ -11,6 +11,7 @@
 				tree: true
 				help: false
 				storyboard: false
+				onlytext: false
 			@menu = new Ractive
 				el: 'menu'
 				template: '#editor-menu'
@@ -29,7 +30,7 @@
 				'import': => $('#import-window').modal 'toggle'
 				'export': => $('#export-window').modal 'toggle'
 				'save':   => alert 'TODO: save'
-				'print':  => alert 'TODO: print'
+				'print':  => win.editor.print()
 				'save1':  => @editor.fire 'save'
 				'load1':  => @editor.fire 'load'
 				# edit
@@ -60,6 +61,13 @@
 					@sidebar.set 'storyboard_visible', @panels.storyboard
 					@menu.set 'panels', @panels
 					viewer.update_minimap()
+					
+				'toggle-onlytext': =>
+					@panels.onlytext = !@panels.onlytext
+					@editor.set 'onlytext_visible', @panels.onlytext
+					@menu.set 'panels', @panels
+
+
 
 				# share
 				'show-link': => alert 'TODO: show link'
@@ -165,7 +173,10 @@
 				template: '#modelling-form'
 				data:
 					search: ''
+					theme: Theme
+					themes: Themes
 					tree_visible: true
+					onlytext_visible: false
 			@sidebar = new Ractive
 				el: 'sidebar'
 				template: '#sidebar-panels'
@@ -181,6 +192,11 @@
 			@search_query = ''
 			@filtered = []
 			@selected = null
+			
+			$('#form').draggable
+				containment: '#wrapper'
+				cursor: 'move'
+				opacity: 0.8
 		
 		controller: ->
 			$win.on 'keydown.editor', (e)=>
@@ -264,6 +280,19 @@
 				# Alt+key
 				else if e.altKey
 					switch e.which
+						when $.key.T
+						# toggle tree
+							@panels.tree = !@panels.tree
+							@editor.set 'tree_visible', @panels.tree
+							@menu.set 'panels', @panels
+							viewer.update_minimap()
+							return false
+						when $.key.S
+						# toggle system editor
+							@panels.onlytext = !@panels.onlytext
+							@editor.set 'onlytext_visible', @panels.onlytext
+							@menu.set 'panels', @panels
+							return false
 						when $.key.R
 						# redraw current
 							@update_this()
@@ -390,11 +419,50 @@
 				else
 					# blur input field on Esc
 					doc.activeElement.blur() if e.which == $.key.Esc
+				@editor.fire 'hide-editor' if e.which == $.key.Esc
 				true
 			$win.on 'keyup.editor', (e)=>
 				if e.which == $.key.Shift
 					$('#wrapper').removeClass 'edit'
 				return true
+				
+			# simple editor
+			$("#systemtext").on 'keydown.simpleeditor', (e)=>
+				ta = e.target
+				if e.which in [$.key.Enter, $.key.Tab]
+					e.preventDefault()
+					sel_start = ta.selectionStart
+					sel_end = ta.selectionEnd
+					text = $(ta).val()
+					lines_start = text.lastIndexOf "\n", sel_start-1
+				if e.which == $.key.Tab
+					if sel_start <= sel_end
+						lines_end = text.indexOf "\n", sel_end-1
+						lines_end = sel_end if lines_end < sel_end
+						breaks = text.substring(lines_start+1, lines_end).split("\n");
+						nbr = 0
+						if e.shiftKey
+							for line, i in breaks
+								if line.match /^\s\s/g
+									breaks[i] = line.substring 2, line.length
+									nbr += 2
+							ins = breaks.join "\n"
+						else
+							ins = "  " + breaks.join("\n  ")
+							nbr = breaks.length*2
+						$(ta).val(text.substring(0, lines_start+1) + ins + text.substring(lines_end, text.length))
+						ta.selectionStart = if e.shiftKey then sel_start-Math.min(2, nbr) else sel_start+Math.min(2, nbr)
+						ta.selectionEnd = if e.shiftKey then sel_end-nbr else sel_end+nbr
+				else if e.which == $.key.Enter
+					ins = '\n'
+					t = text.substring(lines_start+1, sel_start)
+					m = t.match /^[\s\-]*/g
+					if m and m[0]
+						ins += m[0]
+					$(ta).val text.substring(0, sel_start)+ins+text.substring(sel_start, text.length)
+					ta.selectionStart = sel_start + ins.length
+					ta.selectionEnd = sel_end + ins.length
+				@editor.set 'systemtext', $(ta).val()
 			
 			# activate editor on map
 			$win.on 'dblclick.editor', (e)=>
@@ -476,6 +544,9 @@
 					@redraw data.link, true
 					@show data.link
 					@focus_this() if zoom
+				'hide-editor': ->
+					$('#form').css
+						display: 'none'
 				'clear-picture': (event, mediastate)=>
 					if mediastate == 'error'
 						@editor.set
@@ -546,7 +617,7 @@
 				'load': (event)=>
 					@system.reload()
 					@edit @system.root
-					@editor.fire 'redraw-all'
+					@update_all()
 					false
 				'remove': (event)=>
 					@remove @editor.get()
@@ -569,10 +640,13 @@
 						is_redo: @history.is_redo()
 				'exportSVG': =>
 					filename = @model_name()
+					@editor.set 'exportingSVG', true
+					# set zoom for export
+					win.viewer.zoom 1
 					bbox = win.modelview.object.bbox()
-					svg_file = win.modelview.draw.exportSvg  # { width: '297mm', height: '210mm' }
-						# width: bbox.width+'px'
-						# height: bbox.height+'px'
+					svg_file = win.modelview.draw.exportSvg
+						width:  bbox.width
+						height: bbox.height
 						exclude: ->
 							@show() if @type == 'text'
 							return @type == 'rect' and (@hasClass('mask') or @hasClass('frame'))
@@ -580,15 +654,25 @@
 					data = new Blob [svg_file], { "type": "text\/xml" }
 					@export_file filename+'.svg', data
 					# restore zoom
-					@editor.fire 'redraw-all'
+					@update_all()
+					@editor.set 'exportingSVG', false
 					false
 				'exportPNG': =>
-					# win.viewer.zoom Theme.maxzoom — doesn't work!? at does
 					filename = @model_name()
+					@editor.set 'exportingPNG', true
+					# set zoom for export
+					win.viewer.zoom 1
 					bbox = win.modelview.object.bbox()
-					svg_file = win.modelview.draw.exportSvg  # { width: '297mm', height: '210mm' }
-						width: bbox.width
-						height: bbox.height
+					# here about canvas limit - http://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
+					overzoom = 8000/Math.max(bbox.width, bbox.height, bbox.x2, bbox.y2)
+					if overzoom < 1
+						win.viewer.zoom overzoom
+						bbox = win.modelview.object.bbox()
+					w = Math.round Math.max bbox.width, bbox.x2
+					h = Math.round Math.max bbox.height, bbox.y2
+					svg_file = win.modelview.draw.exportSvg
+						width:  w
+						height: h
 						exclude: ->
 							@show() if @type == 'text'
 							return @type == 'rect' and (@hasClass('mask') or @hasClass('frame'))
@@ -597,8 +681,8 @@
 					image.onload = =>
 						# prepare canvas for png export
 						canvas = $('<canvas>').appendTo('body').hide()[0]
-						canvas.width = Math.max bbox.width, bbox.x2
-						canvas.height = Math.max bbox.height, bbox.y2
+						canvas.width  = w
+						canvas.height = h
 						png = canvas.getContext "2d"
 						# set white background color and draw image
 						png.fillStyle = '#FFFFFF'
@@ -609,17 +693,11 @@
 						a = $('<a>').attr('download', filename+".png").attr('href', url)
 						a[0].click()
 						# canvas.remove()
-						########$(canvas).show()
-						########$(image).appendTo('body').css
-						########	position: 'absolute'
-						########	left: '0'
-						########	top: '0'
-						########	background: '#FFFFFF'
-						########	zIndex: 1000
-						########	zoom: 0.020
+						@editor.set 'exportingPNG', false
 						# restore zoom
-						@editor.fire 'redraw-all'
+						@update_all()
 					image.src = 'data:image/svg+xml;utf8,'+svg_file
+					# image.src = 'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(svg_file)))
 					false
 				'exportFile': =>
 					filename = @model_name()
@@ -642,17 +720,26 @@
 				'importJSON': (event)=>
 					file = event.node.files[0]
 					if file and file.size<100000
-						reader = new FileReader()
-						reader.onload = (e)=>
-							data = e.target.result
-							@system.deserialize data
-							@edit @system.root
-							@editor.fire 'redraw-all'
-							reader = null
-						reader.readAsText file
+						@import_json file
+						$('#import-window').modal 'toggle'
 					false
 
 			@editor.observe
+				'onlytext_visible': (value)=>
+					if value
+						renderer = new TEXTrender( model:@system )
+						@editor.set 'systemtext', renderer.render()
+				'systemtext': (text)=>
+					if text
+						importer = new TEXTreader( text:text )
+						@system = importer.read()
+						@edit @system.root
+						@update_all()
+				'theme': (theme)=>
+					if theme != win.Theme
+						win.Theme = theme
+						$('#wrapper').css {backgroundColor:theme.color.background}
+						@update_all()
 				'search': (query)=>
 					@search query
 				'mediaurl': (url)=>
@@ -681,7 +768,7 @@
 				'rel_from': (link)=>
 					to = @editor.get 'rel_to'
 					@editor.set 'rel_to', '' if link == to
-				'title description mediastate link linkstate featured': =>
+				'title description mediastate link linkstate featured  systemtext': =>
 					data = @editor.get()
 					clearTimeout @timer_data_update if @timer_data_update
 					@timer_data_update = setTimeout ()=>
@@ -699,7 +786,42 @@
 				@system.save 'autosave'
 				@save_settings()
 			, 10000)
+			
+			# dropzone
+			dropZone = $ '#wrapper'
+			dropZone.on('dragover', (e)->
+				e.preventDefault()
+				dropZone.addClass 'fileover'
+				false
+			).on('dragleave', (e)->
+				e.preventDefault()
+				dropZone.removeClass 'fileover'
+				false
+			).on('drop', (e)=>
+				e.preventDefault()
+				dropZone.removeClass 'fileover'
+				file = e.originalEvent.dataTransfer.files[0]
+				if file and file.size < 100000
+					@import_json file
+				false
+			)
+		
+		print: ->
+			# set zoom for print
+			win.viewer.zoom Theme.maxzoom
+			win.print()
+			@update_all()
 
+		import_json: (file)->
+			reader = new FileReader()
+			reader.onload = (e)=>
+				data = e.target.result
+				@system.deserialize data
+				@edit @system.root
+				@update_all()
+				reader = null
+			reader.readAsText file
+		
 		media_form: (f)->
 			$('button[data-target="#insert-media"]'+(if f then ':not(.active)' else '')).click()
 			$('#model-image').focus().select()
@@ -935,9 +1057,26 @@
 			@show_hierarchy id
 			# highlight current model
 			win.modelview.highlight id
+			# show form over element
+			@pos_editor id
+			$('#form').show() if not @editor.get 'onlytext-visible'
 			
 		edit_title: ->
 			$('#model-title').focus().select() # TODO remake to decorator?
+			
+		pos_editor: (id)->
+			el = win.viewer.find id
+			if el[0]
+				o = el.offset()
+				w = el[0].getBoundingClientRect().width
+				top  = Math.max $('#modeller').offset().top, Math.min o.top, $('body').height()-$('#form').outerHeight(true)
+				left = Math.min o.left+w, $('body').width()-$('#form').outerWidth(true)
+			else
+				top  = 100
+				left = 0
+			$('#form').css
+				left: left
+				top: top
 		
 		redraw: (id, locate)->
 			win.modelview.model = @system
@@ -1230,14 +1369,14 @@
 		load_file: (data)->
 			@system.deserialize data
 			@edit @system.root
-			@editor.fire 'redraw-all'
+			@update_all()
 			
 		create: ->
 			@system = new S
 				root: 'iSystem'
 				iSystem: new A { title: 'New system' }
 			@edit @system.root
-			@editor.fire 'redraw-all'
+			@update_all()
 		
 		apply_settings: (settings)->
 			panels = settings.panels
@@ -1248,6 +1387,7 @@
 					storyboard_visible: panels.storyboard
 				@editor.set
 					tree_visible: panels.tree
+					onlytext_visible: panels.onlytext
 				@menu.set 'panels', panels
 				viewer.update_minimap()
 		

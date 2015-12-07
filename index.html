@@ -2,22 +2,486 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>VIEW OF SHARED MODEL</title>
+	<title>Tectograph</title>
 	<link rel="stylesheet" href="css/normalize.css">
 	<link rel="stylesheet" href="css/font-awesome.min.css">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/viewer.css">
+	<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-	<div id="wrapper"><div id="canvas"></div><div id="controls"></div></div>
-	<div id="static"></div>
+	<div id="schema-editor">
+		<div id="menu"></div>
+		<div id="modeller" class="noisy-bg"></div>
+		<div id="sidebar"></div>
+		<div id="wrapper"><div id="canvas"></div><div id="controls"></div></div>
+	</div>
+	<div id="cache"></div>
+
 	<script id="map-controls" type='text/ractive'>
 	<div id="zoom-control" class="btn-group-vertical" role="group">
 		<button class="btn btn-default{{zoomlock=='min' ? ' disabled' : ''}}" on-click="zoom-out" title="Уменьшить (−)"><i class="fa fa-minus"></i></button>
 		<button class="btn btn-default{{zoomlock=='max' ? ' disabled' : ''}}" on-click="zoom-in" title="Увеличить (+)"><i class="fa fa-plus"></i></button>
 	</div>
-	<!--div id="minimap"><div class="map"><div class="model"></div><div class="view"></div></div></div-->
+	<div id="minimap"><div class="map"><div class="model"></div><div class="view"></div></div></div>
 	<div id="progress-indicator" style="width:{{progress}}%;{{is_drawing ? 'display:block;' : ''}}"></div>
+	</script>
+
+	<script id="editor-menu" type='text/ractive'>
+	<nav class="navbar navbar-inverse" role="navigation">
+		<div class="container-fluid">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapsed">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand hidden-sm hidden-md hidden-lg" href="#">Imhub</a>
+			</div>
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="navbar-collapsed">
+			<ul class="nav navbar-nav">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" title="Imhub"><span class="fa fa-info-circle fa-lg"></span></a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="#" on-click='help'><kbd class="pull-right">Ctrl /</kbd><span>Помощь</span></a></li>
+						<!--li><a href="#">Условия использования</a></li>
+						<li><a href="#">Сообщить об ошибке</a></li>
+						<li class="divider"></li>
+						<li><a href="#">О программе</a></li>
+						<li><a href="#">Блог</a></li>
+						<li><a href="#">Контакты</a></li-->
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Схема</a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="#" on-click='create'>Создать</a></li>
+						<!--li><a href="#" on-click='fork'>Скопировать</a></li-->
+						<li><a href="#" on-click='import'>Открыть...</a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click='save1'>Сохранить</a></li>
+						<li><a href="#" on-click='load1'>Переоткрыть</a></li>
+						<!--li><a href="#" on-click='save'>Сохранить</a></li-->
+						<li><a href="#" on-click='export'>Экспорт...</a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click='print'>Печатать</a></li>
+						<!--li><a href="#">Сохранить на дропбоксе</a></li-->
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Правка</a>
+					<ul class="dropdown-menu" role="menu">
+						<li class="{{is_undo ? '' : 'disabled'}}"><a href="#" on-click='undo'><kbd class="pull-right">Ctrl Z</kbd><span><i class="fa fa-fw fa-undo"></i>&nbsp;Отменить</span></a></li>
+						<li class="{{is_redo ? '' : 'disabled'}}"><a href="#" on-click='redo'><kbd class="pull-right">Ctrl Y</kbd><span><i class="fa fa-fw fa-repeat"></i>&nbsp;Повторить</span></a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click='cut'><kbd class="pull-right">Ctrl X</kbd><span>Вырезать</span></a></li>
+						<li><a href="#" on-click='paste'><kbd class="pull-right">Ctrl V</kbd><span>Вставить</span></a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click='insert-image'><kbd class="pull-right">I</kbd><span><i class="fa fa-fw fa-image"></i>&nbsp;Вставить картинку/видео…</span></a></li>
+						<li><a href="#" on-click='insert-link'><kbd class="pull-right">U</kbd><span><i class="fa fa-fw fa-external-link"></i>&nbsp;Вставить ссылку…</span></a></li>
+						<li><a href="#"><kbd class="pull-right">R</kbd><span><i class="fa fa-fw fa-link"></i>&nbsp;Связать…</span></a></li>
+						<li><a href="#"><kbd class="pull-right">Ins</kbd><span>Вставить элемент</span></a></li>
+						<li><a href="#"><kbd class="pull-right">Del</kbd><span>Удалить</span></a></li>
+						<li class="divider"></li>
+						<li><a href="#"><kbd class="pull-right">Ctrl ↑</kbd><span>Переместить вверх</span></a></li>
+						<li><a href="#"><kbd class="pull-right">Ctrl ↓</kbd><span>Поместить внутрь</span></a></li>
+						<li><a href="#"><kbd class="pull-right">Ctrl ←</kbd><span>Влево</span></a></li>
+						<li><a href="#"><kbd class="pull-right">Ctrl →</kbd><span>Вправо</span></a></li>
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Вид</a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="#" on-click="redraw-this">Перерисовать</a></li>
+						<li><a href="#" on-click="redraw-all">Перерисовать всё</a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click="toggle-onlytext"><kbd class="pull-right">Alt S</kbd><span><i class="fa fa-fw {{panels.onlytext ? 'fa-check' : ''}}"></i>&nbsp;Упрощенный редактор</span></a></li>
+						<li><a href="#" on-click="toggle-tree"><kbd class="pull-right">Alt T</kbd><span><i class="fa fa-fw {{panels.tree ? 'fa-check' : ''}}"></i>&nbsp;Дерево</span></a></li>
+						<li class="divider"></li>
+						<!--li><a href="#">100%</a></li-->
+						<li><a href="#" on-click="zoom-in"><kbd class="pull-right">+</kbd><span><i class="fa fa-fw fa-search-plus"></i>&nbsp;Увеличить</span></a></li>
+						<li><a href="#" on-click="zoom-out"><kbd class="pull-right">−</kbd><span><i class="fa fa-fw fa-search-minus"></i>&nbsp;Уменьшить</span></a></li>
+						<li><a href="#" on-click="fit-all">Показать всё</a></li>
+						<li><a href="#" on-click="fit-this"><kbd class="pull-right">Alt F</kbd><span>Показать объект</span></a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click="toggle-storyboard"><i class="fa fa-fw {{panels.storyboard ? 'fa-check' : ''}}"></i>&nbsp;Презентация</a></li>
+					</ul>
+				</li>
+				<!--li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Поделиться</a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="#" on-click="show-link">Ссылка</a></li>
+						<li><a href="#" on-click="embed">Встроить...</a></li>
+						<li><a href="#" on-click="share-fb"><i class="fa fa-fw fa-facebook"></i>&nbsp;Facebook</a></li>
+						<li><a href="#" on-click="share-tw"><i class="fa fa-fw fa-twitter"></i>&nbsp;Twitter</a></li>
+						<li><a href="#" on-click="share-vk"><i class="fa fa-fw fa-vk"></i>&nbsp;VK</a></li>
+						<li class="divider"></li>
+						<li><a href="#" on-click="co-authors"><i class="fa fa-fw fa-group"></i>&nbsp;Соавторы...</a></li>
+					</ul>
+				</li-->
+			</ul>
+			<!--ul class="nav navbar-nav navbar-right">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="fa fa-user"></span>&nbsp;Leo</a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="#">Профиль</a></li>
+						<li><a href="#">Мои схемы</a></li>
+						<li class="divider"></li>
+						<li><a href="#">Выйти</a></li>
+					</ul>
+				</li>
+			</ul-->
+			</div><!-- /.navbar-collapse -->
+		</div><!-- /.container-fluid -->
+	</nav>
+	</script>
+
+	<script id='modelling-form' type='text/ractive'>
+	<div id="tree" class="noisy-bg{{!tree_visible ? ' hidden' : ''}}">
+		<ul class="list-unstyled">
+			{{#system}}
+			<li class="level-{{level}}{{ link==id ? ' active' : '' }}{{ search ? ' filter '+(found ? 'in' : 'out') : '' }}" id="tree-{{link}}">{{#if link==id }}<i class="fa fa-caret-right"></i>{{/if}}<a href="#{{link}}" on-click="goto" title="{{title}}">{{#if f}}<strong>{{title}}</strong>{{else}}{{title}}{{/if}}</a></li>
+			{{/system}}
+		</ul>
+	</div>
+	<div id="form" class="{{onlytext_visible ? ' hidden' : ''}}">
+		<form role="form" class="">
+			<button type="button" class="close" data-dismiss="modal" on-click="hide-editor"><span aria-hidden="true">&times;</span><span class="sr-only">Закрыть</span></button>
+			<input type="hidden" id="model-id" value="{{id}}">
+			<div class="form-group has-feedback">
+				<label for="model-title" class="control-label sr-only">Заголовок</label>
+				<input type="text" class="form-control" id="model-title" placeholder="Заголовок" value='{{title}}' autocomplete="off">
+				<span id="model-featured" class="fa form-control-feedback {{ featured ? 'fa-star text-warning' : 'fa-star-o text-muted'}}" on-click="toggle-featured" title="{{ featured ? 'Снять выделение' : 'Выделить'}} (F)"></span>
+			</div>
+			<div class="form-group">
+				<label for="model-description" class="control-label sr-only">Описание</label>
+				<textarea class="form-control" id="model-description" rows="5" placeholder="Описание" value='{{description}}'></textarea>
+			</div>
+			<div id="model-addons">
+				<div class="row">
+					<div class="col-xs-6">
+						<div class="form-group">
+							<label for="model-addons" class="control-label sr-only">Дополнения</label>
+							<div class="input-group">
+								<div class="btn-group" role="tablist" aria-multiselectable="true">
+									<button type="button" class="btn btn-default" data-toggle="collapse" data-parent="#model-addons" data-target="#insert-media" aria-expanded="false" aria-controls="insert-media" title="Картинка или видео (I)">
+										<i class="fa fa-{{ video ? 'film' : 'image'}}{{ mediastate=='success' ? ' text-info' : ''}}"></i>
+									</button>
+									<button type="button" class="btn btn-default" data-toggle="collapse" data-parent="#model-addons" data-target="#insert-link" aria-expanded="false" aria-controls="insert-link" title="Внешняя ссылка (A)">
+										<i class="fa fa-external-link{{ link ? ' text-info' : ''}}"></i>
+									</button>
+									<div class="btn-group" role="group">
+										<button id="tie-with" type="button" class="btn btn-default dropdown-toggle{{!is_element || !siblings || siblings.elements.length<2 ? ' disabled' : ''}}" title="Связать с соседним объектом (R)" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-link"></i></button>
+										<ul class="dropdown-menu" role="menu">
+											{{#each siblings.elements}}
+											{{#if link!=id}}<li><a href="#{{link}}" on-click="tie-with">{{title}}</a></li>{{/if}}
+											{{/each}}
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-4">
+						<div class="form-group">
+							<label for="model-addons" class="control-label sr-only">Структура</label>
+							<div class="input-group">
+								<div class="btn-group" role="tablist" aria-multiselectable="true">
+									<button type="button" class="btn btn-default" title="Добавить элемент (Ins)" on-click="add-element"><i class="fa fa-plus"></i></button>
+									<button type="button" class="btn btn-default{{!elements || elements.length==0 ? ' disabled' : ''}}" data-toggle="collapse" data-parent="#model-addons" data-target="#edit-structure" aria-expanded="false" aria-controls="insert-media" title="Структура (S)">
+										<i class="fa fa-th"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-xs-2" title="{{!parent || elements.length>0 ? 'Прежде чем удалить объект, удалите все его элементы' : ''}}">
+						<button type="button" class="btn btn-danger pull-right{{!parent || elements.length>0 ? ' disabled' : ''}}" on-click="remove" title="Удалить (Del)"><i class="fa fa-trash-o"></i></button>
+					</div>
+				</div>
+				<div id="insert-media" class="collapse" role="tabpanel">
+					<div class="form-group{{ mediastate ? ' has-feedback has-'+mediastate : '' }}" id="model-image-group">
+						<label for="model-image" class="control-label sr-only">Иллюстрация</label>
+						<span class="fa form-control-feedback {{ mediastate=='success' ? 'fa-check' : mediastate=='error' ? 'fa-ban pointer' : mediastate=='warning' ? 'fa-warning' : 'hidden'}}" on-click="clear-picture:{{mediastate}}"></span>
+						<input type="text" id="model-image" class="form-control" placeholder="Ссылка" value='{{mediaurl}}'>
+						<input type="hidden" id="model-imgsize" value='{{imgsize}}'>
+						<input type="hidden" id="model-imgpos" value='{{imgpos}}'>
+						<input type="hidden" id="model-imgscale" value='{{imgscale}}'>
+						<input type="hidden" id="model-preview" value='{{preview}}'>
+						<input type="hidden" id="model-video" value='{{video}}'>
+						<div id="picture-preview"></div>
+						<!-- Video window -->
+						<div class="modal fade" id="video-preview" tabindex="-1" role="dialog" aria-labelledby="video-h" aria-hidden="true">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Закрыть</span></button>
+										<h4 class="modal-title" id="video-h">{{mediaurl}}</h4>
+									</div>
+									<div class="modal-body">{{{video}}}</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="picture-scale" decorator="slider:{{imgscale}},{{ imgpos=='left.title'||imgpos=='right.title' }}"></div>
+					<div id="picture-scale-hint" class="text-muted">
+						<span class="value scale01" on-click="set-scale:0.1">0.1x</span>
+						<span class="value scale05" on-click="set-scale:0.5">0.5x</span>
+						<span class="value scale1"  on-click="set-scale:1.0">1x</span>
+						<span class="value scale2"  on-click="set-scale:2.0">2x</span>
+						<span class="value scale5"  on-click="set-scale:5.0">5x</span>
+						<span class="value scale10" on-click="set-scale:10">10x</span>
+					</div>
+					<div class="form-group">
+						<label for="model-image-preview" class="control-label sr-only">Позиция</label>
+						<div class="input-group">
+							<div class="btn-group">
+								<button type="button" class="btn btn-default{{ imgpos=='left.title' ?  ' active' : '' }}" on-click="change-imgpos:left.title"  title="Иконка слева от заголовка"><i class="fa fa-image"></i>&nbsp;<i class="fa fa-font"></i></button>
+								<button type="button" class="btn btn-default{{ imgpos=='right.title' ? ' active' : '' }}" on-click="change-imgpos:right.title" title="Иконка справа от заголовка"><i class="fa fa-font"></i>&nbsp;<i class="fa fa-image"></i></button>
+								<button type="button" class="btn btn-default{{ imgpos=='left.desc'  ?  ' active' : '' }}" on-click="change-imgpos:left.desc"   title="Слева от описания"><i class="fa fa-image"></i>&nbsp;<i class="fa fa-align-left"></i></button>
+								<button type="button" class="btn btn-default{{ imgpos=='right.desc' ?  ' active' : '' }}" on-click="change-imgpos:right.desc"  title="Справа от описания"><i class="fa fa-align-left"></i>&nbsp;<i class="fa fa-image"></i></button>
+								<button type="button" class="btn btn-default{{ imgpos=='above.desc' ?  ' active' : '' }}" on-click="change-imgpos:above.desc"  title="Над описанием"><i class="fa fa-image fa-top"></i>&nbsp;<i class="fa fa-align-left fa-bottom"></i></button>
+								<button type="button" class="btn btn-default{{ imgpos=='below.desc' ?  ' active' : '' }}" on-click="change-imgpos:below.desc"  title="Под описанием"><i class="fa fa-align-left fa-top"></i>&nbsp;<i class="fa fa-image fa-bottom"></i></button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="insert-link" class="collapse" role="tabpanel">
+					<div class="form-group{{ linkstate ? ' has-feedback has-'+linkstate : '' }}" id="model-link-group">
+						<label for="model-link" class="control-label sr-only">Внешняя ссылка</label>
+						<span class="fa form-control-feedback {{ linkstate=='success' ? 'fa-check' : linkstate=='error' ? 'fa-ban' : 'hidden'}}"></span>
+						<input type="text" id="model-link" class="form-control" placeholder="Ссылка" value='{{link}}'>
+					</div>
+					<div class="form-group">
+						<label for="model-link-pos" class="control-label sr-only">Позиция</label>
+						<div class="input-group">
+							<div class="btn-group">
+								<button type="button" class="btn btn-default{{ linkpos=='title' ? ' active' : '' }}" on-click="change-linkpos:title" title="Ссылка в заголовке"><i class="fa fa-underline"></i></button>
+								<button type="button" class="btn btn-default{{ linkpos=='desc'  ? ' active' : '' }}" on-click="change-linkpos:desc"  title="Ссылка после описания"><i class="fa fa-align-left"></i>&nbsp;<i class="fa fa-external-link"></i></button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="edit-structure" class="collapse{{!elements || elements.length==0 ? ' hidden' : ''}}" role="tabpanel">
+					<div class="form-group">
+						<label for="model-structure" class="control-label sr-only">Структура</label>
+						<div class="input-group">
+							<input type="hidden" id="model-structure">
+							<div class="btn-group" id="model-structure-type">
+								<button type="button" class="btn btn-sm btn-default{{ structure=='list.inline' ? ' active' : '' }}" on-click="change-struct:list.inline">Строка</button>
+								<button type="button" class="btn btn-sm btn-default{{ structure=='list.stack' ?  ' active' : '' }}" on-click="change-struct:list.stack">Список</button>
+								<button type="button" class="btn btn-sm btn-default{{ structure=='list.bricks' ? ' active' : '' }}" on-click="change-struct:list.bricks">Блоки</button>
+								<button type="button" class="btn btn-sm btn-default{{ structure=='matrix' ?      ' active' : '' }}" on-click="change-struct:matrix">Матрица</button>
+								<button type="button" class="btn btn-sm btn-default{{ structure=='graph' ?       ' active' : '' }}" on-click="change-struct:graph">Граф</button>
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label sr-only">Элементы</label>
+						<div class="clearfix" decorator="sortable:{{elements}}">
+							{{#elements}}<a class="label label-primary subelement" href="#{{link}}" on-click='goto' title="{{title}}">{{title}}</a>{{/elements}}
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="relation_from_to">
+							<select name="model-rel-from" id="model-rel-from" class="form-control input-sm" value="{{rel_from}}">
+								<option selected value=""></option>
+								{{#elements}}<option value="{{link}}">{{title}}</option>{{/elements}}
+							</select>
+							<span class="rel_direction" on-click="rel-dir-inverse" on-mouseover-mouseenter="swap-on" on-mouseout-mouseleave="swap-off"><i class="fa fa-long-arrow-right"></i></span>
+							<select name="model-rel-to" id="model-rel-to" class="form-control input-sm" value="{{rel_to}}">
+								<option selected value=""></option>
+								{{#elements}}<option value="{{link}}" class="{{link==rel_from ? 'hidden' : ''}}">{{title}}</option>{{/elements}}
+							</select>
+							<button type="button" class="btn btn-default {{(!rel_from || !rel_to) ?' disabled':''}}" title="Связать" on-click="add-relation"><i class="fa fa-link"></i></button>
+						</div>
+						<label class="control-label sr-only">Связи</label>
+						<div class="clearfix">
+							{{#relations}}<a class="label label-primary" href="#{{link}}" on-click='goto' title="{{title}}">{{title}}</a>{{/relations}}
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div id="subform" class="noisy-bg{{!onlytext_visible ? ' hidden' : ''}}">
+		<textarea id="systemtext" class="form-control" value='{{systemtext}}' rows="20"></textarea>
+	</div>
+	<!-- Import window -->
+	<div class="modal fade" id="import-window" tabindex="-1" role="dialog" aria-labelledby="import-h" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Закрыть</span></button>
+					<h4 class="modal-title" id="import-h">Импорт JSON</h4>
+				</div>
+				<div class="modal-body">
+					<input type="file" id="model-import-json" on-change="importJSON">
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="top" class="noisy-bg">
+		<div class="form-inline" id="theme">
+			<label class="control-label input-sm">Стиль:</label>
+			<select class="form-control input-sm" value="{{theme}}">
+				{{#each themes}}
+					<option class="{{this==theme ? 'active' : ''}}"{{ this==theme ? ' selected' : '' }} value={{this}}>{{title}}</option>
+				{{/each}}
+			</select>
+		</div>
+		<div id="search" class="form-inline">
+			<label class="control-label sr-only" for="searchfield">Поиск</label>
+			<div class="form-group has-feedback">
+				<div class="input-group input-group-sm">
+					<input type="text" class="form-control input-sm" value='{{search}}' placeholder="Поиск" title="(/)" autocomplete="off" on-keydown="show-search-results">
+					<span class="form-control-feedback {{ search ? 'fa fa-times text-muted pointer' : 'hidden'}}" on-click="clear-search"></span>
+					<div class="input-group-btn">
+						<button id="filter-dropdown" type="button" class="btn btn-default dropdown-toggle{{ filtered.length ? '' : ' disabled' }}" data-toggle="dropdown" aria-expanded="false"{{ filtered.length ? ' title="Найдено: '+filtered.length+' (↓)"' : '' }}>
+							<span class="fa fa-filter{{ filtered.length ? ' text-primary' : '' }}"></span>
+						</button>
+						<ul class="dropdown-menu dropdown-menu-right" role="menu">
+						{{#filtered}}<li class="{{ link==id ? 'active' : '' }}"><a class="" href="#{{link}}" on-click='goto:true' title="{{title}}">{{title}}</a></li>{{/filtered}}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="hierarchy">
+			{{#hierarchy}}
+			<div class="btn-group">
+				<button class="btn btn-xs btn-default element" type="button" on-click="goto" title="{{title}}">{{title}}</button>
+				{{#if this.siblings}}
+				<button data-toggle="dropdown" class="btn btn-xs btn-default dropdown-toggle" type="button"><span class="caret"></span></button>
+				<ul class="dropdown-menu">
+				{{# { siblings: this.siblings, current: this } }}
+					{{#each siblings.elements}}<li class="{{current.link==link ? 'active' : ''}}{{ search && !found ? 'disabled' : '' }}"><a href="#{{link}}" on-click="goto">{{title}}</a></li>{{/each}}
+					{{#if siblings.relations}}<li class="divider"></li>{{/if}}
+					{{#each siblings.relations}}<li class="{{current.link==link ? 'active' : ''}}{{ search && !found ? 'disabled' : '' }}"><a href="#{{link}}" on-click="goto">{{title}}</a></li>{{/each}}
+				{{/}}
+				</ul>
+				{{/if}}
+			</div>&nbsp;
+			{{/hierarchy}}
+			{{#if elements}}
+			<div class="btn-group">
+				<button data-toggle="dropdown" class="btn btn-xs btn-default btn-primary dropdown-toggle" type="button"><span class="caret"></span></button>
+				<ul class="dropdown-menu">
+					{{#elements}}<li><a href="#{{link}}" class="{{ search && !found ? 'disabled' : '' }}" on-click="goto">{{title}}</a></li>{{/elements}}
+					{{#if relations}}<li class="divider"></li>{{/if}}
+					{{#relations}}<li><a href="#{{link}}" class="{{ search && !found ? 'disabled' : '' }}" on-click="goto">{{title}}</a></li>{{/relations}}
+				</ul>
+			</div>
+			{{/if}}
+		</div>
+	</div>
+	<!-- Export window -->
+	<div class="modal fade" id="export-window" tabindex="-1" role="dialog" aria-labelledby="hotkeys-h" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Закрыть</span></button>
+					<h4 class="modal-title" id="hotkeys-h">Экспорт</h4>
+				</div>
+				<div class="modal-body">
+					<div>
+						<span>Скачать файл:</span>
+						<div class="btn-group">
+							<a href="#" class="btn btn-default" on-click="exportSVG"><i class="fa fa-{{exportingSVG ? 'spinner fa-spin' : 'file-image-o' }}"></i> SVG</a>
+							<a href="#" class="btn btn-default" on-click="exportPNG"><i class="fa fa-{{exportingPNG ? 'spinner fa-spin' : 'file-image-o' }}"></i> PNG</a>
+							<a href="#" class="btn btn-default" on-click="exportJSON"><i class="fa fa-{{exportingJSON ? 'spinner fa-spin' : 'file-code-o' }}"></i> JSON</a>
+							<!--a href="#" class="text-muted">TODO: PDF</a-->
+						</div>
+						<!--a href="#" class="text-muted">TODO: FreeMind</a-->
+					</div>
+					<br />
+					<div role="tabpanel">
+						<ul class="nav nav-tabs" role="tablist">
+							<li role="presentation" class="active"><a href="#export-json" aria-controls="export-json" role="tab" data-toggle="tab">JSON</a></li>
+							<li role="presentation"><a href="#export-text" aria-controls="export-text" role="tab" data-toggle="tab">Текст</a></li>
+							<li role="presentation"><a href="#export-html" aria-controls="export-html" role="tab" data-toggle="tab">HTML</a></li>
+							<li role="presentation"><a href="#export-xml" aria-controls="export-xml" role="tab" data-toggle="tab">XML</a></li>
+						</ul>
+						<div class="tab-content hidden">
+							<div role="tabpanel" class="tab-pane active" id="export-json" data-type="application/json" data-ext="json"><pre class="exported-json"></pre></div>
+							<div role="tabpanel" class="tab-pane" id="export-text" data-type="text/plain" data-ext="txt"><pre class="exported-text"></pre></div>
+							<div role="tabpanel" class="tab-pane" id="export-html" data-type="text/html" data-ext="html"><div class="exported-html"></div></div>
+							<div role="tabpanel" class="tab-pane" id="export-xml" data-type="text/xml" data-ext="xml"><pre class="exported-xml"></pre></div>
+						</div>
+						<div id="export-preview" contenteditable></div>
+					</div>
+					<br />
+					<a href="#" on-click="exportFile"><i class="fa fa-file-text-o"></i> Скачать</a>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+					<!--button type="button" class="btn btn-primary">Save changes</button-->
+				</div>
+			</div>
+		</div>
+	</div>
+	</script>
+	
+	<script id="sidebar-panels" type='text/ractive'>
+	<div id="help" class="noisy-bg{{!help_visible ? ' hidden' : ''}}">
+		<button type="button" class="close" on-click='close-help'><span aria-hidden="true">&times;</span><span class="sr-only">Закрыть</span></button>
+		<h4>Клавиатурные сокращения</h4>
+		<div class="panel panel-default">
+			<table class="table">
+				<tbody>
+					<tr><th colspan="2">Навигация</th></tr>
+					<tr><td>Сместить карту</td><td><kbd>Shift ↑↓←→</kbd> , <kbd>Num 1−4, 6−9</kbd></td></tr>
+					<tr><td>Увеличить/уменьшить</td><td><kbd>+</kbd> / <kbd>−</kbd></td></tr>
+					<tr><td>Увеличить объект под&nbsp;курсором</td><td><kbd>Ctrl</kbd>-клик</td></tr>
+					<tr><td>Увеличить текущий объект</td><td><kbd>Alt F</kbd></td></tr>
+					<tr><td>Центрировать текущий объект</td><td><kbd>Alt V</kbd></td></tr>
+					<tr><td>Перейти к&nbsp;родителю</td><td><kbd>←</kbd></td></tr>
+					<tr><td>Перейти к&nbsp;первому элементу</td><td><kbd>→</kbd></td></tr>
+					<tr><td>Перейти к&nbsp;предыдущему/следующему объекту в&nbsp;дереве</td><td><kbd>↑</kbd> / <kbd>↓</kbd></td></tr>
+					<tr><th colspan="2">Редактирование</th></tr>
+					<tr><td>Редактировать объект под&nbsp;курсором</td><td><kbd>Shift</kbd>-клик, двойной клик</td></tr>
+					<tr><td>Редактировать объект в&nbsp;центре карты</td><td><kbd>Num 5</kbd></td></tr>
+					<tr><td>Создать новый элемент (с&nbsp;заголовком из&nbsp;выделения)</td><td><kbd>Ins</kbd> (&nbsp;<kbd>Shift Ins</kbd>&nbsp;)</td></tr>
+					<tr><td>Создать нового соседа (позади/впереди)</td><td><kbd>Shift Enter</kbd> / <kbd>Ctrl Enter</kbd></td></tr>
+					<tr><td>Переместить объект на&nbsp;уровень вверх</td><td><kbd>Ctrl ↑</kbd></td></tr>
+					<tr><td>Поместить объект внутрь следующего соседа</td><td><kbd>Ctrl ↓</kbd></td></tr>
+					<tr><td>Сдвинуть объект в&nbsp;пределах уровня назад/вперед</td><td><kbd>Ctrl ←</kbd> / <kbd>Ctrl →</kbd></td></tr>
+					<tr><td>Вырезать объект</td><td><kbd>Ctrl X</kbd></td></tr>
+					<tr><td>Вставить вырезанный объект в&nbsp;текущий</td><td><kbd>Ctrl V</kbd></td></tr>
+					<tr><td>Отметить объект</td><td><kbd>F</kbd>, <kbd>*</kbd></td></tr>
+					<tr><td>Вставить картинку/видео</td><td><kbd>I</kbd></td></tr>
+					<tr><td>Вставить ссылку</td><td><kbd>U</kbd></td></tr>
+					<tr><td>Связать с соседом</td><td><kbd>R</kbd></td></tr>
+					<tr><td>Изменить тип структуры объекта</td><td><kbd>S</kbd></td></tr>
+					<tr><td>Удалить объект</td><td><kbd>Del</kbd></td></tr>
+					<tr><th colspan="2">Общее</th></tr>
+					<tr><td>Поиск</td><td><kbd>/</kbd></td></tr>
+					<tr><td>Переключить редактор</td><td><kbd>Alt S</kbd></td></tr>
+					<tr><td>Показать/спрятать дерево</td><td><kbd>Alt T</kbd></td></tr>
+					<tr><td>Показать это&nbsp;окно</td><td><kbd>Ctrl /</kbd></td></tr>
+					<tr><td>Отменить последнюю операцию</td><td><kbd>Ctrl Z</kbd></td></tr>
+					<tr><td>Повторить отмененную операцию</td><td><kbd>Ctrl Y</kbd></td></tr>
+					<tr><td>Сохранить систему в&nbsp;локальном хранилище</td><td><kbd>Ctrl S</kbd></td></tr>
+					<tr><td>Загрузить систему из&nbsp;хранилища</td><td><kbd>Ctrl L</kbd></td></tr>
+					<tr><td>Перерисовать объект</td><td><kbd>Alt R</kbd></td></tr>
+					<tr><td>Перерисовать систему</td><td><kbd>Alt A</kbd></td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div id="storyboard" class="noisy-bg{{!storyboard_visible ? ' hidden' : ''}}">
+		<button type="button" class="close" on-click='close-storyboard'><span aria-hidden="true">&times;</span><span class="sr-only">Закрыть</span></button>
+		<em>TODO</em>
+	</div>
 	</script>
 	
 	<script src="js/libs-min/jquery.js"></script>
@@ -26,15 +490,17 @@
 	<script src="js/libs-min/jquery.scrollintoview.js"></script>
 	<script src="js/libs-min/bootstrap.js"></script>
 	<script src="js/libs-min/ractive.js"></script>
-
 	<script src="js/libs-min/svg.js"></script>
 	<script src="js/libs-min/svg.export.js"></script>
 	<script src="js/compiled/utils.js"></script>
 	<script src="js/compiled/model.js"></script>
 	<script src="js/compiled/themes.js"></script>
 	<script src="js/compiled/svg-render.js"></script>
+	<script src="js/compiled/text-render.js"></script>
+	<script src="js/compiled/text-import.js"></script>
 	<script src="js/compiled/viewer.js"></script>
+	<script src="js/compiled/editor.js"></script>
 	<script src="js/compiled/samples.js"></script>
-	<script src="js/compiled/app-view.js"></script>
+	<script src="js/compiled/app.js"></script>
 </body>
 </html>

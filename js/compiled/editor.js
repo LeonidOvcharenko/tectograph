@@ -14,7 +14,8 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
       this.panels = {
         tree: true,
         help: false,
-        storyboard: false
+        storyboard: false,
+        onlytext: false
       };
       this.menu = new Ractive({
         el: 'menu',
@@ -59,7 +60,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
         })(this),
         'print': (function(_this) {
           return function() {
-            return alert('TODO: print');
+            return win.editor.print();
           };
         })(this),
         'save1': (function(_this) {
@@ -161,6 +162,13 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
             _this.sidebar.set('storyboard_visible', _this.panels.storyboard);
             _this.menu.set('panels', _this.panels);
             return viewer.update_minimap();
+          };
+        })(this),
+        'toggle-onlytext': (function(_this) {
+          return function() {
+            _this.panels.onlytext = !_this.panels.onlytext;
+            _this.editor.set('onlytext_visible', _this.panels.onlytext);
+            return _this.menu.set('panels', _this.panels);
           };
         })(this),
         'show-link': (function(_this) {
@@ -330,7 +338,10 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
         template: '#modelling-form',
         data: {
           search: '',
-          tree_visible: true
+          theme: Theme,
+          themes: Themes,
+          tree_visible: true,
+          onlytext_visible: false
         }
       });
       this.sidebar = new Ractive({
@@ -349,11 +360,16 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
       this.external_links = {};
       this.search_query = '';
       this.filtered = [];
-      return this.selected = null;
+      this.selected = null;
+      return $('#form').draggable({
+        containment: '#wrapper',
+        cursor: 'move',
+        opacity: 0.8
+      });
     };
 
     Editor.prototype.controller = function() {
-      var autosave;
+      var autosave, dropZone;
       $win.on('keydown.editor', (function(_this) {
         return function(e) {
           var b, child, el, id, parent, ref, sibling;
@@ -434,6 +450,17 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
             }
           } else if (e.altKey) {
             switch (e.which) {
+              case $.key.T:
+                _this.panels.tree = !_this.panels.tree;
+                _this.editor.set('tree_visible', _this.panels.tree);
+                _this.menu.set('panels', _this.panels);
+                viewer.update_minimap();
+                return false;
+              case $.key.S:
+                _this.panels.onlytext = !_this.panels.onlytext;
+                _this.editor.set('onlytext_visible', _this.panels.onlytext);
+                _this.menu.set('panels', _this.panels);
+                return false;
               case $.key.R:
                 _this.update_this();
                 return false;
@@ -551,6 +578,9 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
               doc.activeElement.blur();
             }
           }
+          if (e.which === $.key.Esc) {
+            _this.editor.fire('hide-editor');
+          }
           return true;
         };
       })(this));
@@ -560,6 +590,56 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
             $('#wrapper').removeClass('edit');
           }
           return true;
+        };
+      })(this));
+      $("#systemtext").on('keydown.simpleeditor', (function(_this) {
+        return function(e) {
+          var breaks, i, ins, k, len1, line, lines_end, lines_start, m, nbr, ref, sel_end, sel_start, t, ta, text;
+          ta = e.target;
+          if ((ref = e.which) === $.key.Enter || ref === $.key.Tab) {
+            e.preventDefault();
+            sel_start = ta.selectionStart;
+            sel_end = ta.selectionEnd;
+            text = $(ta).val();
+            lines_start = text.lastIndexOf("\n", sel_start - 1);
+          }
+          if (e.which === $.key.Tab) {
+            if (sel_start <= sel_end) {
+              lines_end = text.indexOf("\n", sel_end - 1);
+              if (lines_end < sel_end) {
+                lines_end = sel_end;
+              }
+              breaks = text.substring(lines_start + 1, lines_end).split("\n");
+              nbr = 0;
+              if (e.shiftKey) {
+                for (i = k = 0, len1 = breaks.length; k < len1; i = ++k) {
+                  line = breaks[i];
+                  if (line.match(/^\s\s/g)) {
+                    breaks[i] = line.substring(2, line.length);
+                    nbr += 2;
+                  }
+                }
+                ins = breaks.join("\n");
+              } else {
+                ins = "  " + breaks.join("\n  ");
+                nbr = breaks.length * 2;
+              }
+              $(ta).val(text.substring(0, lines_start + 1) + ins + text.substring(lines_end, text.length));
+              ta.selectionStart = e.shiftKey ? sel_start - Math.min(2, nbr) : sel_start + Math.min(2, nbr);
+              ta.selectionEnd = e.shiftKey ? sel_end - nbr : sel_end + nbr;
+            }
+          } else if (e.which === $.key.Enter) {
+            ins = '\n';
+            t = text.substring(lines_start + 1, sel_start);
+            m = t.match(/^[\s\-]*/g);
+            if (m && m[0]) {
+              ins += m[0];
+            }
+            $(ta).val(text.substring(0, sel_start) + ins + text.substring(sel_start, text.length));
+            ta.selectionStart = sel_start + ins.length;
+            ta.selectionEnd = sel_end + ins.length;
+          }
+          return _this.editor.set('systemtext', $(ta).val());
         };
       })(this));
       $win.on('dblclick.editor', (function(_this) {
@@ -693,6 +773,11 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
             }
           };
         })(this),
+        'hide-editor': function() {
+          return $('#form').css({
+            display: 'none'
+          });
+        },
         'clear-picture': (function(_this) {
           return function(event, mediastate) {
             if (mediastate === 'error') {
@@ -814,7 +899,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           return function(event) {
             _this.system.reload();
             _this.edit(_this.system.root);
-            _this.editor.fire('redraw-all');
+            _this.update_all();
             return false;
           };
         })(this),
@@ -858,27 +943,8 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           return function() {
             var bbox, data, filename, svg_file;
             filename = _this.model_name();
-            bbox = win.modelview.object.bbox();
-            svg_file = win.modelview.draw.exportSvg({
-              exclude: function() {
-                if (this.type === 'text') {
-                  this.show();
-                }
-                return this.type === 'rect' && (this.hasClass('mask') || this.hasClass('frame'));
-              }
-            });
-            data = new Blob([svg_file], {
-              "type": "text\/xml"
-            });
-            _this.export_file(filename + '.svg', data);
-            _this.editor.fire('redraw-all');
-            return false;
-          };
-        })(this),
-        'exportPNG': (function(_this) {
-          return function() {
-            var bbox, filename, image, svg_file;
-            filename = _this.model_name();
+            _this.editor.set('exportingSVG', true);
+            win.viewer.zoom(1);
             bbox = win.modelview.object.bbox();
             svg_file = win.modelview.draw.exportSvg({
               width: bbox.width,
@@ -890,12 +956,45 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
                 return this.type === 'rect' && (this.hasClass('mask') || this.hasClass('frame'));
               }
             });
+            data = new Blob([svg_file], {
+              "type": "text\/xml"
+            });
+            _this.export_file(filename + '.svg', data);
+            _this.update_all();
+            _this.editor.set('exportingSVG', false);
+            return false;
+          };
+        })(this),
+        'exportPNG': (function(_this) {
+          return function() {
+            var bbox, filename, h, image, overzoom, svg_file, w;
+            filename = _this.model_name();
+            _this.editor.set('exportingPNG', true);
+            win.viewer.zoom(1);
+            bbox = win.modelview.object.bbox();
+            overzoom = 8000 / Math.max(bbox.width, bbox.height, bbox.x2, bbox.y2);
+            if (overzoom < 1) {
+              win.viewer.zoom(overzoom);
+              bbox = win.modelview.object.bbox();
+            }
+            w = Math.round(Math.max(bbox.width, bbox.x2));
+            h = Math.round(Math.max(bbox.height, bbox.y2));
+            svg_file = win.modelview.draw.exportSvg({
+              width: w,
+              height: h,
+              exclude: function() {
+                if (this.type === 'text') {
+                  this.show();
+                }
+                return this.type === 'rect' && (this.hasClass('mask') || this.hasClass('frame'));
+              }
+            });
             image = new Image;
             image.onload = function() {
               var a, canvas, png, url;
               canvas = $('<canvas>').appendTo('body').hide()[0];
-              canvas.width = Math.max(bbox.width, bbox.x2);
-              canvas.height = Math.max(bbox.height, bbox.y2);
+              canvas.width = w;
+              canvas.height = h;
               png = canvas.getContext("2d");
               png.fillStyle = '#FFFFFF';
               png.fillRect(0, 0, canvas.width, canvas.height);
@@ -903,7 +1002,8 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
               url = canvas.toDataURL("image/png");
               a = $('<a>').attr('download', filename + ".png").attr('href', url);
               a[0].click();
-              return _this.editor.fire('redraw-all');
+              _this.editor.set('exportingPNG', false);
+              return _this.update_all();
             };
             image.src = 'data:image/svg+xml;utf8,' + svg_file;
             return false;
@@ -943,25 +1043,52 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
         })(this),
         'importJSON': (function(_this) {
           return function(event) {
-            var file, reader;
+            var file;
             file = event.node.files[0];
             if (file && file.size < 100000) {
-              reader = new FileReader();
-              reader.onload = function(e) {
-                var data;
-                data = e.target.result;
-                _this.system.deserialize(data);
-                _this.edit(_this.system.root);
-                _this.editor.fire('redraw-all');
-                return reader = null;
-              };
-              reader.readAsText(file);
+              _this.import_json(file);
+              $('#import-window').modal('toggle');
             }
             return false;
           };
         })(this)
       });
       this.editor.observe({
+        'onlytext_visible': (function(_this) {
+          return function(value) {
+            var renderer;
+            if (value) {
+              renderer = new TEXTrender({
+                model: _this.system
+              });
+              return _this.editor.set('systemtext', renderer.render());
+            }
+          };
+        })(this),
+        'systemtext': (function(_this) {
+          return function(text) {
+            var importer;
+            if (text) {
+              importer = new TEXTreader({
+                text: text
+              });
+              _this.system = importer.read();
+              _this.edit(_this.system.root);
+              return _this.update_all();
+            }
+          };
+        })(this),
+        'theme': (function(_this) {
+          return function(theme) {
+            if (theme !== win.Theme) {
+              win.Theme = theme;
+              $('#wrapper').css({
+                backgroundColor: theme.color.background
+              });
+              return _this.update_all();
+            }
+          };
+        })(this),
         'search': (function(_this) {
           return function(query) {
             return _this.search(query);
@@ -1012,7 +1139,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
             }
           };
         })(this),
-        'title description mediastate link linkstate featured': (function(_this) {
+        'title description mediastate link linkstate featured  systemtext': (function(_this) {
           return function() {
             var data;
             data = _this.editor.get();
@@ -1033,12 +1160,55 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           };
         })(this)
       });
-      return autosave = setInterval((function(_this) {
+      autosave = setInterval((function(_this) {
         return function() {
           _this.system.save('autosave');
           return _this.save_settings();
         };
       })(this), 10000);
+      dropZone = $('#wrapper');
+      return dropZone.on('dragover', function(e) {
+        e.preventDefault();
+        dropZone.addClass('fileover');
+        return false;
+      }).on('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.removeClass('fileover');
+        return false;
+      }).on('drop', (function(_this) {
+        return function(e) {
+          var file;
+          e.preventDefault();
+          dropZone.removeClass('fileover');
+          file = e.originalEvent.dataTransfer.files[0];
+          if (file && file.size < 100000) {
+            _this.import_json(file);
+          }
+          return false;
+        };
+      })(this));
+    };
+
+    Editor.prototype.print = function() {
+      win.viewer.zoom(Theme.maxzoom);
+      win.print();
+      return this.update_all();
+    };
+
+    Editor.prototype.import_json = function(file) {
+      var reader;
+      reader = new FileReader();
+      reader.onload = (function(_this) {
+        return function(e) {
+          var data;
+          data = e.target.result;
+          _this.system.deserialize(data);
+          _this.edit(_this.system.root);
+          _this.update_all();
+          return reader = null;
+        };
+      })(this);
+      return reader.readAsText(file);
     };
 
     Editor.prototype.media_form = function(f) {
@@ -1352,11 +1522,33 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
       };
       this.editor.set(editable);
       this.show_hierarchy(id);
-      return win.modelview.highlight(id);
+      win.modelview.highlight(id);
+      this.pos_editor(id);
+      if (!this.editor.get('onlytext-visible')) {
+        return $('#form').show();
+      }
     };
 
     Editor.prototype.edit_title = function() {
       return $('#model-title').focus().select();
+    };
+
+    Editor.prototype.pos_editor = function(id) {
+      var el, left, o, top, w;
+      el = win.viewer.find(id);
+      if (el[0]) {
+        o = el.offset();
+        w = el[0].getBoundingClientRect().width;
+        top = Math.max($('#modeller').offset().top, Math.min(o.top, $('body').height() - $('#form').outerHeight(true)));
+        left = Math.min(o.left + w, $('body').width() - $('#form').outerWidth(true));
+      } else {
+        top = 100;
+        left = 0;
+      }
+      return $('#form').css({
+        left: left,
+        top: top
+      });
     };
 
     Editor.prototype.redraw = function(id, locate) {
@@ -1456,7 +1648,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
     };
 
     Editor.prototype.rebuild_matrix = function() {
-      var el, el2, elements, i, j, k, l, len1, len2, len3, len4, len5, n, new_matrix, o, p, r, relations, row;
+      var el, el2, elements, i, j, k, l, len1, len2, len3, len4, len5, n, new_matrix, p, q, r, relations, row;
       elements = this.editor.get('elements');
       if (!elements || elements.length === 0) {
         return null;
@@ -1475,10 +1667,10 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
       if (relations && relations.length > 0) {
         for (i = n = 0, len3 = elements.length; n < len3; i = ++n) {
           el = elements[i];
-          for (j = o = 0, len4 = elements.length; o < len4; j = ++o) {
+          for (j = p = 0, len4 = elements.length; p < len4; j = ++p) {
             el2 = elements[j];
-            for (p = 0, len5 = relations.length; p < len5; p++) {
-              r = relations[p];
+            for (q = 0, len5 = relations.length; q < len5; q++) {
+              r = relations[q];
               if (r.from === new_matrix[i][i] && r.to === new_matrix[j][j]) {
                 new_matrix[i][j] = r.link;
               }
@@ -1788,7 +1980,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
     Editor.prototype.load_file = function(data) {
       this.system.deserialize(data);
       this.edit(this.system.root);
-      return this.editor.fire('redraw-all');
+      return this.update_all();
     };
 
     Editor.prototype.create = function() {
@@ -1799,7 +1991,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
         })
       });
       this.edit(this.system.root);
-      return this.editor.fire('redraw-all');
+      return this.update_all();
     };
 
     Editor.prototype.apply_settings = function(settings) {
@@ -1812,7 +2004,8 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           storyboard_visible: panels.storyboard
         });
         this.editor.set({
-          tree_visible: panels.tree
+          tree_visible: panels.tree,
+          onlytext_visible: panels.onlytext
         });
         this.menu.set('panels', panels);
         return viewer.update_minimap();

@@ -162,25 +162,27 @@
 				return d+1
 			else
 				return 0
-
+		
 		height: ->
 			@depth_of(@root)+1
 		
 		# TODO: auto-id, add-element, add-link, remove-element, ...
-		serialize: ->
-			JSON.stringify @, (key, value)->
-				return if key == "system" then undefined else value   # avoid circular reference
-
-		deserialize: (s)->
+		rebuild: (s)->
 			for key, a of @
 				delete @[key] if a instanceof A
-			p = JSON.parse s
-			for key, a of p
+			for key, a of s
 				if key=='root' or key=='story'
 					@[key] = a
 				else
 					@[key] = new A a
 					@[key].system = @
+		
+		serialize: ->
+			JSON.stringify @, (key, value)->
+				return if key == "system" then undefined else value   # avoid circular reference
+		
+		deserialize: (s)->
+			@rebuild JSON.parse s
 		
 		save: (key)->
 			key = key || 'system'
