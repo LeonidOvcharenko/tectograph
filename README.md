@@ -15,13 +15,13 @@
 Работают горячие клавиши, отмена/возврат действий, автосохранение.
 
 ## Просмотрщик
-[Просмотрщик](http://leonidovcharenko.github.com/tectograph/view) позволяет просмотреть систему, сохраненную в формате JSON,
-в том числе встроить на страницу через iframe.
+Поделиться схемой (предварительно сохраненной в формате JSON), в том числе встроить на страницу через iframe,
+можно с помощью [просмотрщика](http://leonidovcharenko.github.com/tectograph/view).
 
-Ссылка для просмотра тектограммы: `http://leonidovcharenko.github.com/tectograph/view#прямая-ссылка-на-файл##N`, где N — код стиля, число от 0 до 6.
+Ссылка для просмотра тектограммы: `http://leonidovcharenko.github.com/tectograph/view#прямая-ссылка-на-json-файл##N`, где N — код стиля, число от 0 до 6.
 
 [Пример](http://leonidovcharenko.github.io/tectograph/view#https://dl.dropboxusercontent.com/s/1o2ne7gxvbu5us3/25-point_website_usability_checklist.json?dl=0##2)
 
 ## Описание и примеры
 
-Описание и пример — на [моем сайте](http://leonidovcharenko.ru/tectograms).
+См. на [моем сайте](http://leonidovcharenko.ru/tectograms).
