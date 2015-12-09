@@ -4,7 +4,7 @@
 	$win = $ win
 	
 	win.editor = win.viewer = null
-	win.system = system2
+	win.system = win.empty_system
 	win.system.reload 'autosave'
 	
 	$win.load ->
@@ -22,14 +22,14 @@
 		win.editor.load_settings()
 	
 	# responces on extension's messages
-	win.addEventListener "message", (event)->
-		# We only accept messages from ourselves
-		return if event.source != win
-		if event.data.type
-			if event.data.type == "SAVE"
-				win.postMessage { type: "DATA", system: system.serialize() }, "*"
-			else if event.data.type == "LOAD"
-				editor.load_file event.data.system
-	, false
+	# win.addEventListener "message", (event)->
+	# 	# We only accept messages from ourselves
+	# 	return if event.source != win
+	# 	if event.data.type
+	# 		if event.data.type == "SAVE"
+	# 			win.postMessage { type: "DATA", system: system.serialize() }, "*"
+	# 		else if event.data.type == "LOAD"
+	# 			editor.load_file event.data.system
+	# , false
 
 )(jQuery, window, document)

@@ -730,7 +730,7 @@
 			p = Theme.markersize   # actually all markers are of one size, auto resizing accordingly to stroke width
 			@arrow = @draw.marker 4*p, 4*p, (add)->
 				add.path('M 0,'+2*p+' L'+4*p+','+3*p+' L'+3*p+','+2*p+' L'+4*p+','+p+' Z')
-			@arrow.fill @stroke.color
+			@arrow.fill @stroke.color  # Theme.color.stroke
 		
 		closest_point: (points, p)->
 			minw = Infinity
@@ -781,10 +781,17 @@
 				dp = 0.01
 				hp1 = line.pointAt pos*edge_length
 				hp2 = line.pointAt (pos-dp)*edge_length
-				helper = @draw.line(hp1.x, hp1.y, hp2.x, hp2.y).stroke({ width: @stroke.width, color: Theme.color.background })
+				helper = @draw.line(hp1.x, hp1.y, hp2.x, hp2.y).stroke({ width: @stroke.width, color: Theme.color.stroke })
 				helper.marker 'start', @arrow
 				@object.add helper
 				helper.back()
+				# IE fix
+				if !!navigator.userAgent.match(/(MSIE\s)|(Trident.*rv\:11\.)/)
+					# helper.marker 'start', @arrow
+					# helper.plot hp1.x, hp1.y, hp2.x, hp2.y
+					parent = helper.node.parentNode
+					parent.removeChild helper.node
+					parent.appendChild helper.node
 			# find intersection of line and box
 			inside = (box, p)-> p.x>box.x and p.x<box.x2 and p.y>box.y and p.y<box.y2
 			find_intersection = (box, from, to)=>

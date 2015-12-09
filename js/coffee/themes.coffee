@@ -141,6 +141,7 @@
 		K: 2
 		fontFamily: 'courier new'
 		color:
+			text: '#333333'
 			emphasis: '#FF3333'
 		
 	win.Themes.push new ThemeGen

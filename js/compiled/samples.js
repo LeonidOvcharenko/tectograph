@@ -662,7 +662,7 @@
       "matrix": null
     })
   });
-  return win.system7 = new S({
+  win.system7 = new S({
     "root": "iface",
     "iface": new A({
       "title": "Интерфейс пользователя",
@@ -794,6 +794,13 @@
       "title": "Аппаратное обеспечение",
       "description": "хард",
       "id": "hardware"
+    })
+  });
+  return win.empty_system = new S({
+    "root": "i0000",
+    "i0000": new A({
+      "title": "Empty system",
+      "description": "with no description"
     })
   });
 })(jQuery, window, document);

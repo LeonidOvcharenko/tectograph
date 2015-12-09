@@ -36,7 +36,6 @@ kbd {
 	overflow: hidden;
 }
 #wrapper {
-	margin-top: 40px;
 }
 #wrapper #progress-indicator {
 	display: none;
@@ -57,6 +56,7 @@ kbd {
 /* ------------------------- */
 #menu {
 	margin-top: -70px;
+	height: 70px;
 }
 #menu .navbar {
 	border: none;
@@ -193,7 +193,6 @@ kbd {
 	background-color: #E0E0E0;
 	height: 100%;
 	box-sizing: border-box;
-	margin-top: 40px;
 	border-right: 1px solid #CCCCCC;
 }
 #modeller #top {
@@ -521,14 +520,13 @@ kbd {
 	background-color: #E0E0E0;
 	height: 100%;
 	box-sizing: border-box;
-	margin-top: 40px;
 }
 #sidebar #help {
 	overflow-y: auto;
 	overflow-x: auto;
 	height: 100%;
 	padding: 15px;
-	width: 280px;
+	width: 320px;
 	position: relative;
 	background-color: white;
 	float: right;

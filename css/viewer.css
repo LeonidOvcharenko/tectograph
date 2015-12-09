@@ -26,19 +26,18 @@ body {
 	font-family: 'PT Sans', sans-serif;
 }
 #canvas svg a {
-	fill: #0E3456;
 	text-decoration: underline;
 }
 #canvas rect.frame.none {
 	stroke-width: 0!important;
 }
 .drag {
-	cursor: url(../images/openhand.cur), url(/images/openhand.cur), auto!important;
+	cursor: url(/images/openhand.cur), url(../images/openhand.cur), auto!important;
 	cursor: -moz-grab!important;
 	/*cursor: -webkit-grab!important; - looks ugly :( */
 }
 .dragging {
-	cursor: url(../images/closedhand.cur), url(/images/closedhand.cur), auto!important;
+	cursor: url(/images/closedhand.cur), url(../images/closedhand.cur), auto!important;
 	cursor: -moz-grabbing!important;
 	/*cursor: -webkit-grabbing!important; - looks ugly :( */
 }
@@ -50,10 +49,10 @@ body {
 	transition: all 0.4s ease-in-out;
 }
 .edit {
-	cursor: url(../images/pencil.cur), url(/images/pencil.cur), auto!important;
+	cursor: url(/images/pencil.cur), url(../images/pencil.cur), auto!important;
 }
 .zoom_fit {
-	cursor: url(../images/zoom.cur), url(/images/zoom.cur), auto!important;
+	cursor: url(/images/zoom.cur), url(../images/zoom.cur), auto!important;
 }
 .pointer {
 	cursor: pointer;

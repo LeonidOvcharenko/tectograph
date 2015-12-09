@@ -1141,17 +1141,22 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
       edge_length = line.length();
       make_helper = (function(_this) {
         return function(pos) {
-          var dp, helper, hp1, hp2;
+          var dp, helper, hp1, hp2, parent;
           dp = 0.01;
           hp1 = line.pointAt(pos * edge_length);
           hp2 = line.pointAt((pos - dp) * edge_length);
           helper = _this.draw.line(hp1.x, hp1.y, hp2.x, hp2.y).stroke({
             width: _this.stroke.width,
-            color: Theme.color.background
+            color: Theme.color.stroke
           });
           helper.marker('start', _this.arrow);
           _this.object.add(helper);
-          return helper.back();
+          helper.back();
+          if (!!navigator.userAgent.match(/(MSIE\s)|(Trident.*rv\:11\.)/)) {
+            parent = helper.node.parentNode;
+            parent.removeChild(helper.node);
+            return parent.appendChild(helper.node);
+          }
         };
       })(this);
       inside = function(box, p) {

@@ -466,6 +466,10 @@
 		"software": new A {"title":"Программное обеспечение","description":"софт","id":"software"}
 		"hardware": new A {"title":"Аппаратное обеспечение","description":"хард","id":"hardware"}
 
+	win.empty_system = new S
+		"root":     "i0000"
+		"i0000":    new A {"title":"Empty system","description":"with no description"}
+
 )(jQuery, window, document)
 
 ###

@@ -5,9 +5,9 @@
   $doc = $(doc);
   $win = $(win);
   win.editor = win.viewer = null;
-  win.system = system2;
+  win.system = win.empty_system;
   win.system.reload('autosave');
-  $win.load(function() {
+  return $win.load(function() {
     win.Theme = win.Themes[0];
     win.viewer = new Viewer({
       div: 'canvas'
@@ -20,21 +20,6 @@
     win.editor.edit(system.root);
     return win.editor.load_settings();
   });
-  return win.addEventListener("message", function(event) {
-    if (event.source !== win) {
-      return;
-    }
-    if (event.data.type) {
-      if (event.data.type === "SAVE") {
-        return win.postMessage({
-          type: "DATA",
-          system: system.serialize()
-        }, "*");
-      } else if (event.data.type === "LOAD") {
-        return editor.load_file(event.data.system);
-      }
-    }
-  }, false);
 })(jQuery, window, document);
 
 //# sourceMappingURL=app.js.map
