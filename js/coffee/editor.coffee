@@ -465,6 +465,7 @@
 				@editor.set 'systemtext', $(ta).val()
 			
 			# activate editor on map
+			$win.off 'dblclick.viewer'
 			$win.on 'dblclick.editor', (e)=>
 				el = $(e.target).closest('g').data('model')
 				@show el if el  # show_edit

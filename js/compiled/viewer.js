@@ -149,6 +149,16 @@
           return false;
         };
       })(this));
+      $win.on('dblclick.viewer', (function(_this) {
+        return function(e) {
+          var el;
+          el = $(e.target).closest('g').data('model');
+          if (el) {
+            _this.find_and_zoom(el);
+          }
+          return false;
+        };
+      })(this));
       this.wrapper.on('mousedown.viewer', (function(_this) {
         return function(e) {
           var el;

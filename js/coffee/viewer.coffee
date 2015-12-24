@@ -114,6 +114,11 @@
 				factor = if e.deltaY > 0 then @Settings.zoomInStep else @Settings.zoomOutStep
 				@zoom_by factor
 				false
+			# zoom
+			$win.on 'dblclick.viewer', (e)=>
+				el = $(e.target).closest('g').data('model')
+				@find_and_zoom el if el
+				false
 			# dragging
 			@wrapper.on 'mousedown.viewer', (e)=>
 				$.clearSelection()

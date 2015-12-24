@@ -642,6 +642,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           return _this.editor.set('systemtext', $(ta).val());
         };
       })(this));
+      $win.off('dblclick.viewer');
       $win.on('dblclick.editor', (function(_this) {
         return function(e) {
           var el;
