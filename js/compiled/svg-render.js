@@ -396,6 +396,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
         }
       }
       if (this.model.description) {
+        desc_w = Math.min(desc_w, Theme.width[this.level]);
         box = this.render_description(desc_x, desc_y, desc_w);
         image_y = box.y2 + this.fontsize2;
         if (this.model.picture && this.model.picture.pos === 'right.desc') {

@@ -281,6 +281,7 @@
 					box = @render_image image_x, image_y
 					desc_y += box.height+@fontsize2
 			if @model.description
+				desc_w = Math.min(desc_w, Theme.width[@level])
 				box = @render_description(desc_x, desc_y, desc_w)
 				image_y = box.y2+@fontsize2
 				if @model.picture and @model.picture.pos == 'right.desc'
