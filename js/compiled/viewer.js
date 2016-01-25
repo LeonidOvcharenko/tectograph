@@ -56,6 +56,38 @@
           return function() {
             return _this.zoom_step(false);
           };
+        })(this),
+        'clear-search': (function(_this) {
+          return function() {
+            return _this.controls.set('search', '');
+          };
+        })(this),
+        'show-search-results': (function(_this) {
+          return function(e) {
+            var ref;
+            if ((ref = e.original.which) === $.key.Down || ref === $.key.Enter) {
+              $('#filter-dropdown').dropdown('toggle');
+              return false;
+            }
+          };
+        })(this),
+        'goto': (function(_this) {
+          return function(e) {
+            var id;
+            id = e.context.link;
+            if (id) {
+              _this.find_and_zoom(id);
+            }
+            e.original.preventDefault();
+            return false;
+          };
+        })(this)
+      });
+      this.controls.observe({
+        'search': (function(_this) {
+          return function(query) {
+            return _this.search(query);
+          };
         })(this)
       });
       $win.on('keydown.viewer', (function(_this) {
@@ -125,6 +157,11 @@
               case $.key.n3_num:
                 _this.pan_step(-1, -1);
                 break;
+              case $.key.Slash:
+              case $.key.Slash_cyr:
+              case $.key.Slash_num:
+                $('#search input').focus().select();
+                return false;
               default:
                 return true;
             }
@@ -157,6 +194,16 @@
             _this.find_and_zoom(el);
           }
           return false;
+        };
+      })(this));
+      $('#search, #zoom-control').on('mousedown', (function(_this) {
+        return function(e) {
+          return e.stopPropagation();
+        };
+      })(this));
+      $('#search').on('mousedown', (function(_this) {
+        return function(e) {
+          return $('#search input').focus();
         };
       })(this));
       this.wrapper.on('mousedown.viewer', (function(_this) {
@@ -284,6 +331,39 @@
         left: ml,
         top: mt
       });
+    };
+
+    Viewer.prototype.search = function(query) {
+      var el, filtered, id, j, len, ref, ref1, ref2, system;
+      if (query === '') {
+        this.filtered = [];
+        this.search_query = '';
+        this.controls.set('filtered', []);
+        return;
+      }
+      system = ((ref = win.modelview) != null ? (ref1 = ref.opt) != null ? ref1.model : void 0 : void 0) || null;
+      if (this.search_query !== query) {
+        this.search_from = null;
+        this.search_query = query;
+        this.filtered = system.findAll(query);
+        filtered = [];
+        ref2 = this.filtered;
+        for (j = 0, len = ref2.length; j < len; j++) {
+          el = ref2[j];
+          filtered.push({
+            link: el,
+            title: system[el].nav_title()
+          });
+        }
+        this.controls.set('filtered', filtered);
+      }
+      if (system) {
+        id = system.find(query, this.search_from);
+      }
+      if (id) {
+        this.find_and_zoom(id);
+      }
+      return this.search_from = id;
     };
 
     Viewer.prototype.lock_zoom = function(param) {

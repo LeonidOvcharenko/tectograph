@@ -41,6 +41,20 @@
 					@zoom_step true
 				'zoom-out': =>
 					@zoom_step false
+				'clear-search': =>
+					@controls.set 'search', ''
+				'show-search-results': (e)=>
+					if e.original.which in [$.key.Down, $.key.Enter]
+						$('#filter-dropdown').dropdown 'toggle'
+						return false
+				'goto': (e)=>
+					id = e.context.link
+					@find_and_zoom id if id
+					e.original.preventDefault()
+					false
+			@controls.observe
+				'search': (query)=>
+					@search query
 			$win.on 'keydown.viewer', (e)=>
 				@wrapper.addClass 'zoom_fit' if e.which == $.key.Ctrl
 				if $.activeInput()
@@ -102,6 +116,10 @@
 						when $.key.n3_num
 						# pan down-right
 							@pan_step -1, -1
+						when $.key.Slash, $.key.Slash_cyr, $.key.Slash_num
+						# activate search field
+							$('#search input').focus().select()
+							return false
 						else
 							return true
 					return false
@@ -119,6 +137,10 @@
 				el = $(e.target).closest('g').data('model')
 				@find_and_zoom el if el
 				false
+			$('#search, #zoom-control').on 'mousedown', (e)=>
+				e.stopPropagation()
+			$('#search').on 'mousedown', (e)=>
+				$('#search input').focus()
 			# dragging
 			@wrapper.on 'mousedown.viewer', (e)=>
 				$.clearSelection()
@@ -205,7 +227,29 @@
 				height: mh
 				left: ml
 				top: mt
-				
+		
+		search: (query)->
+			if query == ''
+				@filtered = []
+				@search_query = ''
+				@controls.set 'filtered', []
+				return
+			system = win.modelview?.opt?.model || null
+			if @search_query != query
+				@search_from = null
+				@search_query = query
+				@filtered = system.findAll(query)
+				filtered = []
+				for el in @filtered
+					filtered.push
+						link: el
+						title: system[el].nav_title()
+				@controls.set 'filtered', filtered
+			# !!! doesn't work for now:
+			id = system.find query, @search_from if system
+			@find_and_zoom id if id
+			@search_from = id
+		
 		lock_zoom: (param)->
 			@controls.set 'zoomlock', param
 			

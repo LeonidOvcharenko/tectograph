@@ -545,6 +545,8 @@
 					@redraw data.link, true
 					@show data.link
 					@focus_this() if zoom
+					event.original.preventDefault()
+					false
 				'hide-editor': ->
 					$('#form').css
 						display: 'none'

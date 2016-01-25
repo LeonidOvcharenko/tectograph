@@ -28,15 +28,17 @@
   style = s[1] !== '' ? Math.min(win.Themes.length - 1, parseInt(s[1])) : 1;
   return $win.load(function() {
     return $.when(def).then(function(s) {
+      var ref;
       win.system = s;
       win.Theme = win.Themes[style];
       win.viewer = new Viewer({
         div: 'canvas'
       });
-      return win.modelview = new ModelWebView({
+      win.modelview = new ModelWebView({
         div: 'canvas',
         model: system
       });
+      return doc.title = ((ref = system[system.root]) != null ? ref.title : void 0) || 'Tectogram';
     });
   });
 })(jQuery, window, document);

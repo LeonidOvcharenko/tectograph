@@ -770,8 +770,10 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
             _this.redraw(data.link, true);
             _this.show(data.link);
             if (zoom) {
-              return _this.focus_this();
+              _this.focus_this();
             }
+            event.original.preventDefault();
+            return false;
           };
         })(this),
         'hide-editor': function() {

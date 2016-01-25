@@ -34,6 +34,7 @@
 			win.modelview = new ModelWebView
 				div: 'canvas'
 				model: system
+			doc.title = system[system.root]?.title || 'Tectogram'
 			
 		# win.modelviewstatic = new ModelStaticView
 		# 	div: 'static'

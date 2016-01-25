@@ -96,6 +96,22 @@ body {
 	border: 1px solid #357EBD;
 	background: rgba(66, 139, 202, 0.3);
 }
+#wrapper #search {
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	z-index: 2;
+}
+#wrapper #search input {
+	width: 60px;
+}
+#wrapper #search input:focus,
+#wrapper #search input.active {
+	width: 160px;
+}
+#wrapper #search .form-control-feedback {
+	right: 30px;
+}
 
 
 

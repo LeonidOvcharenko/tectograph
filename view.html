@@ -17,6 +17,23 @@
 		<button class="btn btn-default{{zoomlock=='max' ? ' disabled' : ''}}" on-click="zoom-in" title="Увеличить (+)"><i class="fa fa-plus"></i></button>
 	</div>
 	<div id="minimap"><div class="map"><div class="model"></div><div class="view"></div></div></div>
+	<div id="search" class="form-inline">
+		<label class="control-label sr-only" for="searchfield">Поиск</label>
+		<div class="form-group has-feedback">
+			<div class="input-group input-group-sm">
+				<input type="text" class="form-control input-sm smooth-transform{{ filtered.length ? ' active' : '' }}" value='{{search}}' title="(/)" placeholder="Поиск" autocomplete="off" on-keydown="show-search-results">
+				<span class="form-control-feedback {{ search ? 'fa fa-times text-muted pointer' : 'hidden'}}" on-click="clear-search"></span>
+				<div class="input-group-btn">
+					<button id="filter-dropdown" type="button" class="btn btn-default dropdown-toggle{{ filtered.length ? '' : ' disabled' }}" data-toggle="dropdown" aria-expanded="false"{{ filtered.length ? ' title="Найдено: '+filtered.length+' (↓)"' : '' }}>
+						<span class="fa fa-filter{{ filtered.length ? ' text-primary' : '' }}"></span>
+					</button>
+					<ul class="dropdown-menu dropdown-menu-right" role="menu">
+					{{#filtered}}<li class="{{ link==id ? 'active' : '' }}"><a class="" href="#{{link}}" on-click='goto' title="{{title}}">{{title}}</a></li>{{/filtered}}
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div id="progress-indicator" style="width:{{progress}}%;{{is_drawing ? 'display:block;' : ''}}"></div>
 	</script>
 	
