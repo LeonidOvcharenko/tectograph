@@ -790,7 +790,73 @@
 				@save_settings()
 			, 10000)
 			
-			# dropzone
+			# import picture by dragging
+			imgType = /image.*/
+			maxImgSize = 500000
+			picZone = $ '#picture-preview, #model-image'
+			picZone.on('dragover', (e)->
+				e.preventDefault()
+				picZone.addClass 'fileover'
+				false
+			).on('dragleave', (e)->
+				e.preventDefault()
+				picZone.removeClass 'fileover'
+				false
+			).on('drop', (e)=>
+				e.preventDefault()
+				picZone.removeClass 'fileover'
+				data = e.originalEvent.dataTransfer
+				file = data.files[0]
+				if data.types[0].match(imgType) or file.type.match(imgType)
+					if file and file.size < maxImgSize
+						@import_picture file
+				false
+			)
+			foundImage = false
+			paste_mode = ''
+			picZone.on 'paste', (e)=>
+				paste_mode = ''
+				data = e.originalEvent.clipboardData
+				if data.items  # Chrome
+					item = data.items[0]
+					if data.types[0].match(imgType) or item.type.match(imgType)
+						file = item.getAsFile()
+						if file and file.size < maxImgSize
+							e.preventDefault()
+							paste_mode = 'auto'
+							@import_picture file
+							return false
+
+			# on picture paste for Firefox
+			if $.browser.firefox
+				pasteCatcher = $('<div />').attr("contenteditable","true")
+					.css({"position" : "absolute", "left" : "-999", width : "0", height : "0", "overflow" : "hidden", outline : 0})
+					.appendTo('body')   # for FF
+				ctrl_pressed = false
+				pasteCatcher.on 'DOMSubtreeModified.pasteimg', =>
+					return true if paste_mode == 'auto' or not ctrl_pressed
+					child = pasteCatcher.children().last().get(0)
+					if child
+						if child.tagName == "IMG" and child.src.substr(0, 5) == 'data:'
+							@import_picture_src child.src
+					else
+						@import_picture_src pasteCatcher.text()
+					setTimeout ( -> pasteCatcher.html ''), 100
+				picZone.on 'keydown.pasteimg', (e)=>
+					key = e.keyCode
+					if key == $.key.Ctrl or e.metaKey or e.ctrlKey
+						ctrl_pressed = true if not ctrl_pressed
+					if key == $.key.V and (e.ctrlKey or e.metaKey) and not e.altKey
+						if ctrl_pressed
+							pasteCatcher.focus()
+				$win.on 'keyup.pasteimg', (e)=>
+					if ctrl_pressed
+						key = e.keyCode
+						if key == $.key.Ctrl or e.metaKey or e.ctrlKey
+							ctrl_pressed = false
+							$('#model-image').focus() 
+			
+			# dropzone to import system
 			dropZone = $ '#wrapper'
 			dropZone.on('dragover', (e)->
 				e.preventDefault()
@@ -804,7 +870,7 @@
 				e.preventDefault()
 				dropZone.removeClass 'fileover'
 				file = e.originalEvent.dataTransfer.files[0]
-				if file and file.size < 100000
+				if file and file.size < 1000000
 					@import_json file
 				false
 			)
@@ -824,6 +890,19 @@
 				@update_all()
 				reader = null
 			reader.readAsText file
+			
+		import_picture: (file)->
+			reader = new FileReader()
+			reader.onload = (e)=>
+				data = e.target.result
+				@editor.set 'mediaurl', data
+				@update_this()
+				reader = null
+			reader.readAsDataURL file
+		
+		import_picture_src: (src)->
+			@editor.set 'mediaurl', src
+			@update_this()
 		
 		media_form: (f)->
 			$('button[data-target="#insert-media"]'+(if f then ':not(.active)' else '')).click()

@@ -430,6 +430,9 @@ kbd {
 	position: relative;
 	font-size: 1.5em;
 }
+#picture-preview.fileover {
+	background-color: #428BCA;
+}
 #picture-preview i.fa {
 	color: #E0E0E0;
 	text-shadow: 0 1px 0 #DDDDDD;

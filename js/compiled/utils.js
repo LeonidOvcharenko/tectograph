@@ -83,7 +83,7 @@ Rand = {
   $.activeInput = function() {
     var tag;
     tag = doc.activeElement.tagName;
-    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || doc.activeElement.contentEditable === 'true';
   };
   $.clearSelection = function() {
     var sel;
@@ -121,11 +121,14 @@ Rand = {
       return (ref = el.instance) != null ? ref.removeClass(c) : void 0;
     });
   };
-  return $.fn.svgAddClass = function(c) {
+  $.fn.svgAddClass = function(c) {
     return this.each(function(i, el) {
       var ref;
       return (ref = el.instance) != null ? ref.addClass(c) : void 0;
     });
+  };
+  return $.browser = {
+    firefox: navigator.userAgent.toLowerCase().indexOf('firefox') > -1
   };
 })(jQuery, window, document);
 

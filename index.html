@@ -206,7 +206,7 @@
 					<div class="form-group{{ mediastate ? ' has-feedback has-'+mediastate : '' }}" id="model-image-group">
 						<label for="model-image" class="control-label sr-only">Иллюстрация</label>
 						<span class="fa form-control-feedback {{ mediastate=='success' ? 'fa-check' : mediastate=='error' ? 'fa-ban pointer' : mediastate=='warning' ? 'fa-warning' : 'hidden'}}" on-click="clear-picture:{{mediastate}}"></span>
-						<input type="text" id="model-image" class="form-control" placeholder="Ссылка" value='{{mediaurl}}'>
+						<input type="text" id="model-image" class="form-control" placeholder="Ссылка, Drag'n'drop или Ctrl+V файл" value='{{mediaurl}}'>
 						<input type="hidden" id="model-imgsize" value='{{imgsize}}'>
 						<input type="hidden" id="model-imgpos" value='{{imgpos}}'>
 						<input type="hidden" id="model-imgscale" value='{{imgscale}}'>

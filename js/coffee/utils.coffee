@@ -77,7 +77,7 @@ Rand =
 
 	$.activeInput = ->
 		tag = doc.activeElement.tagName
-		tag == "INPUT" || tag == "TEXTAREA" || tag == "SELECT"
+		tag == "INPUT" || tag == "TEXTAREA" || tag == "SELECT" || doc.activeElement.contentEditable == 'true'
 	
 	$.clearSelection = ->
 		if doc.selection and doc.selection.empty
@@ -109,5 +109,8 @@ Rand =
 	
 	$.fn.svgAddClass = (c)->
 		@.each (i, el)-> el.instance?.addClass c
+		
+	$.browser =
+		firefox: navigator.userAgent.toLowerCase().indexOf('firefox') > -1
 		
 )(jQuery, window, document)

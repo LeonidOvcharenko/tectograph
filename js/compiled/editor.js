@@ -369,7 +369,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
     };
 
     Editor.prototype.controller = function() {
-      var autosave, dropZone;
+      var autosave, ctrl_pressed, dropZone, foundImage, imgType, maxImgSize, pasteCatcher, paste_mode, picZone;
       $win.on('keydown.editor', (function(_this) {
         return function(e) {
           var b, child, el, id, parent, ref, sibling;
@@ -1169,6 +1169,111 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           return _this.save_settings();
         };
       })(this), 10000);
+      imgType = /image.*/;
+      maxImgSize = 500000;
+      picZone = $('#picture-preview, #model-image');
+      picZone.on('dragover', function(e) {
+        e.preventDefault();
+        picZone.addClass('fileover');
+        return false;
+      }).on('dragleave', function(e) {
+        e.preventDefault();
+        picZone.removeClass('fileover');
+        return false;
+      }).on('drop', (function(_this) {
+        return function(e) {
+          var data, file;
+          e.preventDefault();
+          picZone.removeClass('fileover');
+          data = e.originalEvent.dataTransfer;
+          file = data.files[0];
+          if (data.types[0].match(imgType) || file.type.match(imgType)) {
+            if (file && file.size < maxImgSize) {
+              _this.import_picture(file);
+            }
+          }
+          return false;
+        };
+      })(this));
+      foundImage = false;
+      paste_mode = '';
+      picZone.on('paste', (function(_this) {
+        return function(e) {
+          var data, file, item;
+          paste_mode = '';
+          data = e.originalEvent.clipboardData;
+          if (data.items) {
+            item = data.items[0];
+            if (data.types[0].match(imgType) || item.type.match(imgType)) {
+              file = item.getAsFile();
+              if (file && file.size < maxImgSize) {
+                e.preventDefault();
+                paste_mode = 'auto';
+                _this.import_picture(file);
+                return false;
+              }
+            }
+          }
+        };
+      })(this));
+      if ($.browser.firefox) {
+        pasteCatcher = $('<div />').attr("contenteditable", "true").css({
+          "position": "absolute",
+          "left": "-999",
+          width: "0",
+          height: "0",
+          "overflow": "hidden",
+          outline: 0
+        }).appendTo('body');
+        ctrl_pressed = false;
+        pasteCatcher.on('DOMSubtreeModified.pasteimg', (function(_this) {
+          return function() {
+            var child;
+            if (paste_mode === 'auto' || !ctrl_pressed) {
+              return true;
+            }
+            child = pasteCatcher.children().last().get(0);
+            if (child) {
+              if (child.tagName === "IMG" && child.src.substr(0, 5) === 'data:') {
+                _this.import_picture_src(child.src);
+              }
+            } else {
+              _this.import_picture_src(pasteCatcher.text());
+            }
+            return setTimeout((function() {
+              return pasteCatcher.html('');
+            }), 100);
+          };
+        })(this));
+        picZone.on('keydown.pasteimg', (function(_this) {
+          return function(e) {
+            var key;
+            key = e.keyCode;
+            if (key === $.key.Ctrl || e.metaKey || e.ctrlKey) {
+              if (!ctrl_pressed) {
+                ctrl_pressed = true;
+              }
+            }
+            if (key === $.key.V && (e.ctrlKey || e.metaKey) && !e.altKey) {
+              if (ctrl_pressed) {
+                return pasteCatcher.focus();
+              }
+            }
+          };
+        })(this));
+        $win.on('keyup.pasteimg', (function(_this) {
+          return function(e) {
+            var key;
+            if (ctrl_pressed) {
+              key = e.keyCode;
+              if (key === $.key.Ctrl || e.metaKey || e.ctrlKey) {
+                ctrl_pressed = false;
+                return $('#model-image').focus();
+              }
+            }
+          };
+        })(this));
+      }
       dropZone = $('#wrapper');
       return dropZone.on('dragover', function(e) {
         e.preventDefault();
@@ -1184,7 +1289,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
           e.preventDefault();
           dropZone.removeClass('fileover');
           file = e.originalEvent.dataTransfer.files[0];
-          if (file && file.size < 100000) {
+          if (file && file.size < 1000000) {
             _this.import_json(file);
           }
           return false;
@@ -1212,6 +1317,26 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
         };
       })(this);
       return reader.readAsText(file);
+    };
+
+    Editor.prototype.import_picture = function(file) {
+      var reader;
+      reader = new FileReader();
+      reader.onload = (function(_this) {
+        return function(e) {
+          var data;
+          data = e.target.result;
+          _this.editor.set('mediaurl', data);
+          _this.update_this();
+          return reader = null;
+        };
+      })(this);
+      return reader.readAsDataURL(file);
+    };
+
+    Editor.prototype.import_picture_src = function(src) {
+      this.editor.set('mediaurl', src);
+      return this.update_this();
     };
 
     Editor.prototype.media_form = function(f) {
