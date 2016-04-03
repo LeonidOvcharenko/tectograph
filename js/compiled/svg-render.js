@@ -616,7 +616,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
       var fullbox;
       this.frame.back().size(1, 1);
       fullbox = this.bbox();
-      return this.frame.size(fullbox.width / this.object.trans.scaleX + this.pad, fullbox.height / this.object.trans.scaleY + this.pad);
+      return this.frame.size(fullbox.width + this.pad, fullbox.height + this.pad);
     };
 
     return Element;
@@ -1264,11 +1264,20 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
 
     ModelWebView.prototype.build_content = function() {
       viewer.scale_content = (function(_this) {
-        return function(scale) {
-          var padding;
-          padding = _this.padding_x * scale;
-          _this.object.scale(scale).move(padding, padding);
-          return _this.apply_text_masks();
+        return function(scale, dx, dy) {
+          var bbox, dfrd;
+          dfrd = $.Deferred();
+          if (1 || _this.object.transform().scaleX === 1) {
+            _this.object.scale(scale, 0, 0);
+            dfrd.resolve();
+          } else {
+            bbox = _this.object.bbox();
+            _this.object.animate(viewer.Settings.scaleDuration).scale(scale, 0, 0).move(dx, dy).after(function() {
+              return dfrd.resolve();
+            });
+          }
+          _this.apply_text_masks();
+          return dfrd.promise();
         };
       })(this);
       this.draw = SVG(this.opt.div).size('100%', '100%');
@@ -1299,15 +1308,15 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
     };
 
     ModelWebView.prototype.correct_canvas = function() {
-      var bbox, newh, neww;
-      bbox = this.object.bbox();
-      neww = bbox.width + this.padding_x * 2 * viewer.scale;
-      newh = bbox.height + this.padding_x * 2 * viewer.scale;
+      var box, newh, neww;
+      box = this.object.bbox();
+      neww = box.width;
+      newh = box.height;
       this.div.css({
-        width: neww,
-        height: newh
+        width: neww * viewer.scale,
+        height: newh * viewer.scale
       });
-      return viewer.save_canvas_size(neww / viewer.scale, newh / viewer.scale);
+      return viewer.save_canvas_size(box.width, box.height);
     };
 
     ModelWebView.prototype.rerender = function() {
@@ -1326,7 +1335,7 @@ var extend = function(child, parent) { for (var key in parent) { if (hasProp.cal
       if (!el) {
         return;
       }
-      parent_obj = el.instance.parent.parent;
+      parent_obj = el.instance.parent().parent();
       parent_tag = parent_obj.attr('data-model');
       parent = parent_obj.drawer;
       parent.model = this.model[parent_tag];

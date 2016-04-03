@@ -181,7 +181,7 @@
         return function(e) {
           var factor;
           _this.fix_point(e.pageX - _this.wrapper.offset().left, e.pageY - _this.wrapper.offset().top);
-          factor = e.deltaY > 0 ? _this.Settings.zoomInStep : _this.Settings.zoomOutStep;
+          factor = e.deltaY > 0 ? _this.Settings.zoomInStepMouse : _this.Settings.zoomOutStepMouse;
           _this.zoom_by(factor);
           return false;
         };
@@ -297,6 +297,9 @@
     Viewer.prototype.Settings = {
       zoomInStep: 1.25,
       zoomOutStep: 0.8,
+      zoomInStepMouse: 1.111111,
+      zoomOutStepMouse: 0.9,
+      scaleDuration: 100,
       panStep: 100,
       minisize: 0.05,
       miniH: 100,
@@ -378,19 +381,20 @@
     };
 
     Viewer.prototype.zoom_by = function(factor) {
-      this.scale = Math.max(Theme.minzoom, Math.min(Theme.maxzoom, this.scale * factor));
-      return this.apply_scale();
+      var scale;
+      scale = Math.max(Theme.minzoom, Math.min(Theme.maxzoom, this.scale * factor));
+      return this.apply_scale(scale);
     };
 
     Viewer.prototype.zoom = function(zoom) {
-      this.scale = zoom;
-      return this.apply_scale();
+      return this.apply_scale(zoom);
     };
 
-    Viewer.prototype.scale_content = function(scale) {};
+    Viewer.prototype.scale_content = function(scale, dx, dy) {};
 
-    Viewer.prototype.apply_scale = function() {
+    Viewer.prototype.apply_scale = function(scale) {
       var newh, newl, newt, neww, oldh, oldpos, oldw;
+      this.scale = scale;
       this.lock_zoom(this.scale === Theme.minzoom ? 'min' : this.scale === Theme.maxzoom ? 'max' : '');
       oldw = this.div.width();
       oldh = this.div.height();
@@ -401,13 +405,16 @@
       newt = this.fixed_y + (newh / oldh) * (oldpos.top - this.fixed_y);
       newl = Math.min(Math.max(newl, -neww), this.wrapper.width());
       newt = Math.min(Math.max(newt, -newh), this.wrapper.height());
-      this.div.css({
-        width: neww,
-        height: newh,
-        left: newl,
-        top: newt
-      });
-      this.scale_content(this.scale);
+      this.scale_content(this.scale, (newl - oldpos.left) / this.scale, (newt - oldpos.top) / this.scale).then((function(_this) {
+        return function() {
+          return _this.div.css({
+            width: neww,
+            height: newh,
+            left: newl,
+            top: newt
+          });
+        };
+      })(this));
       return this.update_minimap();
     };
 
@@ -435,9 +442,10 @@
     };
 
     Viewer.prototype.zoom_fit_all = function() {
+      var scale;
       this.fix_point(0, 0);
-      this.scale = Math.min(this.wrapper.height() / this.div.height(), this.wrapper.width() / this.div.width());
-      return this.apply_scale();
+      scale = Math.min(this.wrapper.height() / this.div.height(), this.wrapper.width() / this.div.width());
+      return this.apply_scale(scale);
     };
 
     Viewer.prototype.find = function(tag) {
@@ -461,11 +469,14 @@
     };
 
     Viewer.prototype.pan_to = function(el) {
-      var rbox;
-      rbox = el.rbox();
+      var div_rect, dx, dy, rect;
+      rect = el.node.getBoundingClientRect();
+      div_rect = this.div.offset();
+      dx = rect.left + rect.width / 2 - div_rect.left;
+      dy = rect.top + rect.height / 2 - div_rect.top;
       this.div.css({
-        left: -rbox.cx + this.wrapper.width() / 2,
-        top: -rbox.cy + this.wrapper.height() / 2
+        left: -dx + this.wrapper.width() / 2,
+        top: -dy + this.wrapper.height() / 2
       });
       return this.update_minimap();
     };
@@ -476,12 +487,7 @@
       rbox = el.rbox();
       factor = Math.min((this.wrapper.height() - Theme.margin) / rbox.height, (this.wrapper.width() - Theme.margin) / rbox.width);
       this.zoom_by(factor);
-      rbox = el.rbox();
-      this.div.css({
-        left: -rbox.cx + this.wrapper.width() / 2,
-        top: -rbox.cy + this.wrapper.height() / 2
-      });
-      return this.update_minimap();
+      return this.pan_to(el);
     };
 
     Viewer.prototype.in_center = function() {

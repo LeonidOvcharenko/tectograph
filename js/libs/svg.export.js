@@ -62,9 +62,9 @@
             }
           }
 
-        } else if (this instanceof SVG.Text || this instanceof SVG.TSpan) {
+        } else if (this instanceof SVG.Text || this instanceof SVG.Tspan) {
           for (i = 0, il = this.node.childNodes.length; i < il; i++)
-            if (this.node.childNodes[i].instance instanceof SVG.TSpan)
+            if (this.node.childNodes[i].instance instanceof SVG.Tspan)
               node += this.node.childNodes[i].instance.exportSvg(options, level + 1)
             else
               node += this.node.childNodes[i].nodeValue.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&#34;').replace(/'/g, '&#39;')

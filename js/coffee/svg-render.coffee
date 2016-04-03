@@ -441,7 +441,8 @@
 		fix_frame: ->
 			@frame.back().size 1, 1
 			fullbox = @bbox()
-			@frame.size fullbox.width/@object.trans.scaleX+@pad, fullbox.height/@object.trans.scaleY+@pad
+			# t = @object.transform()
+			@frame.size fullbox.width+@pad, fullbox.height+@pad  # fullbox.width/t.scaleX+@pad, fullbox.height/t.scaleY+@pad
 
 	class win.Element_NoFrame extends Element
 		constructor: (options)-> super options
@@ -858,10 +859,21 @@
 			@model = @opt.model
 		
 		build_content: ->
-			viewer.scale_content = (scale)=>
-				padding = @padding_x * scale
-				@object.scale(scale).move(padding, padding)
+			viewer.scale_content = (scale, dx, dy)=>
+				dfrd = $.Deferred()
+				if 1 or @object.transform().scaleX == 1
+					# for first rendering - no animation
+					@object.scale(scale, 0, 0)
+					dfrd.resolve()
+				else
+					# TODO: make smooth animation
+					bbox = @object.bbox()
+					@object.animate(viewer.Settings.scaleDuration).scale(scale,0,0).move(dx,dy).after =>
+						# @object.translate(-dx*scale,-dy*scale)
+						# @object.move(0, 0)
+						dfrd.resolve()
 				@apply_text_masks()
+				dfrd.promise()
 			@draw = SVG(@opt.div).size('100%', '100%')
 			@padding_x = Theme.cellp[Theme.toplevel-1]
 			@padding_f = Theme.cellp[Theme.toplevel]
@@ -887,13 +899,14 @@
 			# @controls.set 'is_drawing', false
 			
 		correct_canvas: ->
-			bbox = @object.bbox()
-			neww = bbox.width + @padding_x*2*viewer.scale
-			newh = bbox.height+ @padding_x*2*viewer.scale
+			box = @object.bbox()
+			neww = box.width
+			newh = box.height
 			@div.css
-				width: neww
-				height: newh
-			viewer.save_canvas_size neww/viewer.scale, newh/viewer.scale
+				width: neww *viewer.scale
+				height: newh*viewer.scale
+			# viewer.save_canvas_size box.width/viewer.scale, box.height/viewer.scale
+			viewer.save_canvas_size box.width, box.height
 		
 		rerender: ->
 			@draw.clear()
@@ -907,7 +920,7 @@
 			el = @div.find('g[data-model="'+tag+'"]')[0]
 			return if not el
 			# @controls.set 'is_drawing', true
-			parent_obj = el.instance.parent.parent
+			parent_obj = el.instance.parent().parent()
 			parent_tag = parent_obj.attr 'data-model'
 			parent = parent_obj.drawer
 			parent.model = @model[parent_tag]

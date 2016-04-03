@@ -129,7 +129,7 @@
 			# zoom on mousewheel
 			@wrapper.on 'mousewheel.viewer', (e)=>
 				@fix_point e.pageX-@wrapper.offset().left, e.pageY-@wrapper.offset().top
-				factor = if e.deltaY > 0 then @Settings.zoomInStep else @Settings.zoomOutStep
+				factor = if e.deltaY > 0 then @Settings.zoomInStepMouse else @Settings.zoomOutStepMouse
 				@zoom_by factor
 				false
 			# zoom
@@ -194,13 +194,16 @@
 		Settings:
 			zoomInStep: 1.25
 			zoomOutStep: 0.8
+			zoomInStepMouse: 1.111111
+			zoomOutStepMouse: 0.9
+			scaleDuration: 100 # ms
 			panStep: 100 # px
 			minisize: 0.05
 			miniH: 100 # px
 			miniW: 100 # px
 			# minZoom: 0.01
 			# maxZoom: 50.0
-				
+		
 		save_canvas_size: (w, h)->
 			@original_width  = w || @div.width()
 			@original_height = h || @div.height()
@@ -257,19 +260,19 @@
 			@fix_point @wrapper.width()/2, @wrapper.height()/2
 			factor = if zoomin then @Settings.zoomInStep else @Settings.zoomOutStep
 			@zoom_by factor
-				
+			
 		zoom_by: (factor)->
-			@scale = Math.max(Theme.minzoom, Math.min(Theme.maxzoom, @scale*factor))
-			@apply_scale()
+			scale = Math.max Theme.minzoom, Math.min(Theme.maxzoom, @scale*factor)
+			@apply_scale scale
 			
 		zoom: (zoom)->
-			@scale = zoom
-			@apply_scale()
+			@apply_scale zoom
 
-		scale_content: (scale)->
+		scale_content: (scale, dx, dy)->
 			# console.log 'TODO: scale content for canvas to',scale
 
-		apply_scale: ->
+		apply_scale: (scale)->
+			@scale = scale
 			@lock_zoom(if @scale==Theme.minzoom then 'min' else if @scale==Theme.maxzoom then 'max' else '')
 		
 			# gather the old properties
@@ -280,6 +283,7 @@
 			# compute the new width and height
 			neww = @original_width * @scale
 			newh = @original_height * @scale
+			
 			# compute the new left and top
 			newl = @fixed_x + (neww / oldw) * (oldpos.left - @fixed_x)
 			newt = @fixed_y + (newh / oldh) * (oldpos.top - @fixed_y)
@@ -287,15 +291,15 @@
 			# limit the new left and top to the new mins and maxes
 			newl = Math.min(Math.max(newl, -neww), @wrapper.width())
 			newt = Math.min(Math.max(newt, -newh), @wrapper.height())
-
-			# save all the property updating to last
-			@div.css
-				width: neww
-				height: newh
-				left: newl
-				top: newt
 			
-			@scale_content @scale
+			@scale_content(@scale, (newl-oldpos.left)/@scale, (newt-oldpos.top)/@scale).then =>
+				# save all the property updating to last
+				@div.css
+					width: neww
+					height: newh
+					left: newl
+					top: newt
+			
 			@update_minimap()
 			
 		pan_by: (dx, dy)->
@@ -311,7 +315,7 @@
 				left: newl
 				top: newt
 			@update_minimap()
-				
+			
 		pan_step: (dx, dy)->
 			@pan_by dx*@Settings.panStep, dy*@Settings.panStep
 
@@ -321,8 +325,8 @@
 			
 		zoom_fit_all: ->
 			@fix_point 0, 0
-			@scale = Math.min @wrapper.height()/@div.height(), @wrapper.width()/@div.width()
-			@apply_scale()
+			scale = Math.min @wrapper.height()/@div.height(), @wrapper.width()/@div.width()
+			@apply_scale scale
 			
 		# methods for editor: on canvas — SVG object
 		find: (tag)->
@@ -337,10 +341,14 @@
 			@pan_to el.instance if el
 			
 		pan_to: (el)->
-			rbox = el.rbox()
+			# rbox = el.rbox() # rbox stopped to work here
+			rect = el.node.getBoundingClientRect()
+			div_rect = @div.offset()
+			dx = rect.left+rect.width/2-div_rect.left
+			dy = rect.top+rect.height/2-div_rect.top
 			@div.css
-				left: -rbox.cx+@wrapper.width()/2
-				top: -rbox.cy+@wrapper.height()/2 # -rbox.y #
+				left: -dx+@wrapper.width()/2  # -rbox.cx+@wrapper.width()/2
+				top: -dy+@wrapper.height()/2  # -rbox.cy+@wrapper.height()/2
 			@update_minimap()
 			
 		zoom_fit: (el)->
@@ -348,12 +356,8 @@
 			rbox = el.rbox()
 			factor = Math.min (@wrapper.height()-Theme.margin)/rbox.height, (@wrapper.width()-Theme.margin)/rbox.width
 			@zoom_by factor
-			rbox = el.rbox()
-			@div.css
-				left: -rbox.cx+@wrapper.width()/2
-				top:  -rbox.cy+@wrapper.height()/2
-			@update_minimap()
-				
+			@pan_to el
+			
 		in_center: ->
 			p = @wrapper.offset()
 			x = p.left + @wrapper.width()/2
